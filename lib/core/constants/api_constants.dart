@@ -12,7 +12,7 @@ class ApiConstants {
     const env = String.fromEnvironment('API_BASE_URL');
     if (env.isNotEmpty) return env;
     const envScheme = String.fromEnvironment('API_SCHEME');
-    final scheme = envScheme.isNotEmpty ? envScheme : 'http';
+    final scheme = envScheme.isNotEmpty ? envScheme : 'https';
     final port = scheme == 'https' ? 7133 : 5000;
     if (!kIsWeb && Platform.isAndroid) {
       return '$scheme://10.0.2.2:$port';
@@ -47,6 +47,10 @@ class ApiConstants {
   static const String services = '/api/services';
   static String serviceById(String id) => '/api/services/$id';
 
+  // Notification endpoints
+  static const String notifications = '/api/notifications';
+  static String notificationMarkAsRead(String id) => '/api/notifications/$id/read';
+
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';
     if (relativePath.startsWith('http')) return relativePath;
@@ -54,6 +58,6 @@ class ApiConstants {
   }
 
   // Timeout (milliseconds)
-  static const int connectTimeout = 15000;
-  static const int receiveTimeout = 15000;
+  static const int connectTimeout = 30000;
+  static const int receiveTimeout = 30000;
 }
