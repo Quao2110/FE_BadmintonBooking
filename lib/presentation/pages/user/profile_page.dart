@@ -73,12 +73,12 @@ class _ProfileViewState extends State<_ProfileView> with SingleTickerProviderSta
                     : null,
               )));
             }
-            AppNotification.showInfo(state.message);
+            AppNotification.showInfo(state.message, userId: widget.userId);
             if (state.updatedUser != null) {
               context.read<UserBloc>().add(GetUserByIdEvent(widget.userId));
             }
           } else if (state is UserError) {
-            AppNotification.showError(state.message);
+            AppNotification.showError(state.message, userId: widget.userId);
           }
         },
         builder: (context, state) {

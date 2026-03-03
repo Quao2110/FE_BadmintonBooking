@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
-            AppNotification.showSuccess('Đăng nhập thành công! Chào mừng bạn trở lại 👋');
+            AppNotification.showSuccess('Đăng nhập thành công! Chào mừng bạn trở lại 👋', userId: state.user.id);
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (_) => HomeScreen(user: state.user)),
