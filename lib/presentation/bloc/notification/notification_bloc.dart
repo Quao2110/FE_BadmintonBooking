@@ -19,7 +19,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   Future<void> _onFetch(FetchNotificationsEvent event, Emitter<NotificationState> emit) async {
     emit(NotificationLoading());
     try {
-      final notifications = await repository.getNotifications();
+      final notifications = await repository.getNotifications(event.userId);
       emit(NotificationLoaded(notifications));
     } catch (e) {
       emit(NotificationError(e.toString().replaceFirst('Exception: ', '')));
@@ -30,17 +30,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     try {
       await repository.markAsRead(event.id);
       if (state is NotificationLoaded) {
-        final currentList = (state as NotificationLoaded).notifications;
-        final updatedList = currentList.map((n) {
-          if (n.id == event.id) {
-            // Since entities are usually immutable, we just return a new one if possible or re-fetch
-            // For simplicity in this structure, we could re-fetch or use a copyWith if defined
-            return n; // Placeholder
-          }
-          return n;
-        }).toList();
-        // Option 1: Re-fetch for accuracy
-        add(FetchNotificationsEvent());
+        final userId = (state as NotificationLoaded).notifications.firstWhere((n) => n.id == event.id).userId;
+        add(FetchNotificationsEvent(userId));
       }
     } catch (e) {
       // Handle error silently or log it
