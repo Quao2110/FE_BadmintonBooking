@@ -21,7 +21,8 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color ?? Colors.blue;
+    final cs = Theme.of(context).colorScheme;
+    final bg = color ?? cs.primary;
     return SizedBox(
       height: height,
       child: ElevatedButton(
