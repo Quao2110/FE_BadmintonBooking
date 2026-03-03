@@ -8,8 +8,8 @@ class NotificationRepository implements INotificationRepository {
       : _dataSource = dataSource ?? NotificationRemoteDataSource();
 
   @override
-  Future<List<NotificationEntity>> getNotifications() async {
-    final res = await _dataSource.getNotifications();
+  Future<List<NotificationEntity>> getNotifications(String userId) async {
+    final res = await _dataSource.getNotifications(userId);
     if (res.isSuccess && res.result != null) {
       return res.result!;
     }
@@ -19,6 +19,17 @@ class NotificationRepository implements INotificationRepository {
   @override
   Future<void> markAsRead(String id) async {
     final res = await _dataSource.markAsRead(id);
+    if (!res.isSuccess) throw Exception(res.message);
+  }
+
+  @override
+  Future<void> createNotification(String userId, String title, String message, String type) async {
+    final res = await _dataSource.createNotification({
+      'userId': userId,
+      'title': title,
+      'message': message,
+      'type': type,
+    });
     if (!res.isSuccess) throw Exception(res.message);
   }
 }

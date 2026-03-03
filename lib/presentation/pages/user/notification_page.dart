@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/colors.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
 import '../../bloc/notification/notification_bloc.dart';
 import '../../bloc/notification/notification_event.dart';
 import '../../bloc/notification/notification_state.dart';
@@ -12,7 +14,11 @@ class NotificationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => NotificationBloc.create()..add(FetchNotificationsEvent()),
+      create: (context) {
+        final authState = context.read<AuthBloc>().state;
+        final userId = authState is AuthSuccess ? authState.user.id : '';
+        return NotificationBloc.create()..add(FetchNotificationsEvent(userId!));
+      },
       child: Scaffold(
         backgroundColor: boneColor,
         appBar: AppBar(
@@ -21,11 +27,14 @@ class NotificationPage extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
           actions: [
-            BlocBuilder<NotificationBloc, NotificationState>(
-              builder: (context, state) {
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
                 return IconButton(
                   icon: const Icon(Icons.refresh_rounded),
-                  onPressed: () => context.read<NotificationBloc>().add(FetchNotificationsEvent()),
+                  onPressed: () {
+                    final userId = authState is AuthSuccess ? authState.user.id : '';
+                    context.read<NotificationBloc>().add(FetchNotificationsEvent(userId!));
+                  },
                 );
               },
             ),
@@ -43,9 +52,16 @@ class NotificationPage extends StatelessWidget {
                     const Icon(Icons.error_outline_rounded, size: 48, color: tanColor),
                     const SizedBox(height: 16),
                     Text(state.message, style: const TextStyle(color: cafeNoir)),
-                    TextButton(
-                      onPressed: () => context.read<NotificationBloc>().add(FetchNotificationsEvent()),
-                      child: const Text('Thử lại', style: TextStyle(color: mossGreen)),
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, authState) {
+                        return TextButton(
+                          onPressed: () {
+                            final userId = authState is AuthSuccess ? authState.user.id : '';
+                            context.read<NotificationBloc>().add(FetchNotificationsEvent(userId!));
+                          },
+                          child: const Text('Thử lại', style: TextStyle(color: mossGreen)),
+                        );
+                      },
                     ),
                   ],
                 ),

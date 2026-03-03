@@ -3,6 +3,7 @@ import '../../../domain/entities/notification_entity.dart';
 class NotificationModel extends NotificationEntity {
   const NotificationModel({
     required super.id,
+    required super.userId,
     required super.title,
     required super.message,
     required super.createdAt,
@@ -13,6 +14,7 @@ class NotificationModel extends NotificationEntity {
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
       id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
       title: json['title'] ?? '',
       message: json['message'] ?? '',
       createdAt: json['createdAt'] != null 
@@ -26,6 +28,7 @@ class NotificationModel extends NotificationEntity {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'userId': userId,
       'title': title,
       'message': message,
       'createdAt': createdAt.toIso8601String(),

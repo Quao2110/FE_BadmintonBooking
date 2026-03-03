@@ -1,4 +1,5 @@
 import '../../../core/services/notification_service.dart';
+import '../../../data/repositories/notification_repository_impl.dart';
 
 /// Utility class dùng chung toàn app để hiện push notification trên thanh trạng thái.
 ///
@@ -15,35 +16,53 @@ class AppNotification {
   static int _nextId = 0;
   static int get _id => _nextId++;
 
-  static Future<void> showSuccess(String body, {String title = 'Thành công ✅'}) =>
-      NotificationService.instance.show(
-        id: _id,
-        title: title,
-        body: body,
-        type: NotificationType.success,
-      );
+  static final _repository = NotificationRepository();
 
-  static Future<void> showError(String body, {String title = 'Lỗi ❌'}) =>
-      NotificationService.instance.show(
-        id: _id,
-        title: title,
-        body: body,
-        type: NotificationType.error,
-      );
+  static Future<void> showSuccess(String body, {String title = 'Thành công ✅', String? userId}) async {
+    await NotificationService.instance.show(
+      id: _id,
+      title: title,
+      body: body,
+      type: NotificationType.success,
+    );
+    if (userId != null) {
+      _repository.createNotification(userId, title, body, 'success');
+    }
+  }
 
-  static Future<void> showWarning(String body, {String title = 'Cảnh báo ⚠️'}) =>
-      NotificationService.instance.show(
-        id: _id,
-        title: title,
-        body: body,
-        type: NotificationType.warning,
-      );
+  static Future<void> showError(String body, {String title = 'Lỗi ❌', String? userId}) async {
+    await NotificationService.instance.show(
+      id: _id,
+      title: title,
+      body: body,
+      type: NotificationType.error,
+    );
+    if (userId != null) {
+      _repository.createNotification(userId, title, body, 'error');
+    }
+  }
 
-  static Future<void> showInfo(String body, {String title = 'Thông báo ℹ️'}) =>
-      NotificationService.instance.show(
-        id: _id,
-        title: title,
-        body: body,
-        type: NotificationType.info,
-      );
+  static Future<void> showWarning(String body, {String title = 'Cảnh báo ⚠️', String? userId}) async {
+    await NotificationService.instance.show(
+      id: _id,
+      title: title,
+      body: body,
+      type: NotificationType.warning,
+    );
+    if (userId != null) {
+      _repository.createNotification(userId, title, body, 'warning');
+    }
+  }
+
+  static Future<void> showInfo(String body, {String title = 'Thông báo ℹ️', String? userId}) async {
+    await NotificationService.instance.show(
+      id: _id,
+      title: title,
+      body: body,
+      type: NotificationType.info,
+    );
+    if (userId != null) {
+      _repository.createNotification(userId, title, body, 'info');
+    }
+  }
 }
