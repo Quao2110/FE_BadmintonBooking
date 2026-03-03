@@ -11,6 +11,7 @@ import '../presentation/pages/store/product_list_page.dart';
 import '../presentation/pages/store/product_detail_page.dart';
 import '../presentation/pages/store/service_list_page.dart';
 import '../presentation/pages/store/service_detail_page.dart';
+import '../presentation/pages/user/notification_page.dart';
 
 /// Tên các route trong app
 class AppRoutes {
@@ -26,6 +27,7 @@ class AppRoutes {
   static const String storeDetail = '/store/detail';
   static const String serviceList = '/store/services';
   static const String serviceDetail = '/store/services/detail';
+  static const String notifications = '/notifications';
 }
 
 /// Tham số truyền qua route
@@ -102,6 +104,9 @@ class AppRouter {
         final args = settings.arguments as ServiceDetailArgs?;
         if (args == null) return _slide(const ServiceListPage());
         return _slide(ServiceDetailPage(serviceId: args.serviceId));
+
+      case AppRoutes.notifications:
+        return _slide(const NotificationPage());
 
       default:
         return _slide(const LoginScreen());
