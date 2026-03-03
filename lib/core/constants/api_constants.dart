@@ -10,9 +10,9 @@ class ApiConstants {
   // Windows/macOS/Linux/Web/iOS Simulator: dùng localhost
   static String get baseUrl {
     if (!kIsWeb && Platform.isAndroid) {
-      return 'http://10.0.2.2:5151';   // Android Emulator → HTTP port
+      return 'http://10.0.2.2:5000';   // Android Emulator → HTTP port
     }
-    return 'https://localhost:7133';    // Windows / iOS Sim / Web → HTTPS port
+    return 'http://localhost:5000';    // Windows / iOS Sim / Web → HTTP port
   }
 
   // ── Auth endpoints ────────────────────────────────────────────────────
@@ -29,6 +29,18 @@ class ApiConstants {
   static String userUploadAvatar(String id) => '/api/users/$id/avatar';
   static String userChangePassword(String id) => '/api/users/$id/password';
   static String userByEmail(String email) => '/api/users/email/$email'; // If needed
+
+  // ── Category endpoints ─────────────────────────────────────────────
+  static const String categories = '/api/categories';
+  static String categoryById(String id) => '/api/categories/$id';
+
+  // ── Product endpoints ──────────────────────────────────────────────
+  static const String products = '/api/products';
+  static String productById(String id) => '/api/products/$id';
+
+  // ── Service endpoints ──────────────────────────────────────────────
+  static const String services = '/api/services';
+  static String serviceById(String id) => '/api/services/$id';
 
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';

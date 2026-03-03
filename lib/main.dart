@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'core/theme/app_theme.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/auth/auth_event.dart';
 import 'routes/app_router.dart';
@@ -19,11 +20,8 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Badminton App',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
-        initialRoute: AppRoutes.login,
+        theme: AppTheme.lightTheme,
+        initialRoute: AppRoutes.storeList,
         onGenerateRoute: AppRouter.generateRoute,
       ),
     );
