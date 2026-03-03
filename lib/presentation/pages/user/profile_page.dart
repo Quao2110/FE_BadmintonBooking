@@ -2,7 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../domain/entities/user.dart';
+import '../../../main.dart';
+import '../../../shared/widgets/app_notification.dart';
+import '../../bloc/auth/auth_state.dart';
 import '../../bloc/user/user_bloc.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_event.dart';
 import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
 import '../../../data/models/user/update_user_request.dart';
@@ -43,23 +49,46 @@ class _ProfileViewState extends State<_ProfileView> with SingleTickerProviderSta
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hồ sơ cá nhân'),
-        backgroundColor: Colors.blue,
+        backgroundColor: kombuGreen,
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: const [Tab(icon: Icon(Icons.person), text: 'Thông tin'), Tab(icon: Icon(Icons.lock), text: 'Mật khẩu')],
+          unselectedLabelColor: boneColor.withOpacity(0.7),
+          indicatorColor: tanColor,
+          indicatorWeight: 3,
+          tabs: const [
+            Tab(icon: Icon(Icons.person), text: 'Thông tin'),
+            Tab(icon: Icon(Icons.lock), text: 'Mật khẩu')
+          ],
         ),
       ),
       body: BlocConsumer<UserBloc, UserState>(
         listener: (context, state) {
           if (state is UserActionSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Row(children: [const Icon(Icons.check_circle, color: Colors.white), const SizedBox(width: 8), Text(state.message)]), backgroundColor: Colors.green.shade700, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
-            if (state.updatedUser != null) context.read<UserBloc>().add(GetUserByIdEvent(widget.userId));
+            final updated = state.updatedUser;
+            if (updated != null) {
+              context.read<AuthBloc>().add(UpdateAuthUserEvent(User(
+                id: updated.id,
+                email: updated.email,
+                fullName: updated.fullName,
+                role: updated.role,
+                avatarUrl: updated.avatarUrl,
+                // Giữ lại token cũ từ state hiện tại của AuthBloc nếu cần
+                token: (context.read<AuthBloc>().state is AuthSuccess) 
+                    ? (context.read<AuthBloc>().state as AuthSuccess).user.token 
+                    : null,
+              )));
+            }
+
+            // Hiện thông báo đẩy (push notification)
+            AppNotification.showInfo(state.message);
+            
+            if (state.updatedUser != null) {
+              context.read<UserBloc>().add(GetUserByIdEvent(widget.userId));
+            }
           } else if (state is UserError) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red.shade700, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.all(16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
+            AppNotification.showError(state.message);
           }
         },
         builder: (context, state) {
@@ -150,7 +179,7 @@ class _EditProfileTabState extends State<_EditProfileTab> {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.blue.shade100,
+                    backgroundColor: mossGreen.withOpacity(0.1),
                     backgroundImage: _selectedImagePath != null
                         ? FileImage(File(_selectedImagePath!))
                         : (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
@@ -159,7 +188,7 @@ class _EditProfileTabState extends State<_EditProfileTab> {
                     child: (_selectedImagePath == null && (user?.avatarUrl == null || user!.avatarUrl!.isEmpty))
                         ? Text(
                             (user?.fullName?.isNotEmpty == true ? user!.fullName![0] : '?').toUpperCase(),
-                            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.blue),
+                            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: kombuGreen),
                           )
                         : null,
                   ),
@@ -170,7 +199,7 @@ class _EditProfileTabState extends State<_EditProfileTab> {
                       onTap: _pickImage,
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+                        decoration: const BoxDecoration(color: mossGreen, shape: BoxShape.circle),
                         child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                       ),
                     ),
@@ -180,15 +209,15 @@ class _EditProfileTabState extends State<_EditProfileTab> {
             ),
             const SizedBox(height: 8),
             if (user != null) ...[
-              Center(child: Text(user.email, style: TextStyle(color: Colors.grey.shade600))),
-              Center(child: Chip(label: Text(user.role ?? 'Customer'), backgroundColor: Colors.blue.shade50)),
+              Center(child: Text(user.email, style: TextStyle(color: cafeNoir.withOpacity(0.7)))),
+              Center(child: Chip(label: Text(user.role ?? 'Customer'), backgroundColor: tanColor.withOpacity(0.3), side: BorderSide.none)),
             ],
             const SizedBox(height: 24),
             TextFormField(controller: _nameCtrl, validator: Validators.fullName, decoration: const InputDecoration(labelText: 'Họ và tên', prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder())),
             const SizedBox(height: 16),
             TextFormField(controller: _phoneCtrl, keyboardType: TextInputType.phone, validator: Validators.phoneNumber, decoration: const InputDecoration(labelText: 'Số điện thoại', prefixIcon: Icon(Icons.phone_outlined), border: OutlineInputBorder())),
             const SizedBox(height: 24),
-            SizedBox(height: 48, child: ElevatedButton(onPressed: isLoading ? null : () => _save(context), style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('LƯU THAY ĐỔI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))),
+            SizedBox(height: 48, child: ElevatedButton(onPressed: isLoading ? null : () => _save(context), style: ElevatedButton.styleFrom(backgroundColor: kombuGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('LƯU THAY ĐỔI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))),
           ],
         ),
       ),
@@ -240,7 +269,7 @@ class _ChangePasswordTabState extends State<_ChangePasswordTab> {
               decoration: InputDecoration(labelText: 'Xác nhận mật khẩu mới', prefixIcon: const Icon(Icons.lock_outline), border: const OutlineInputBorder(), suffixIcon: IconButton(icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm))),
             ),
             const SizedBox(height: 24),
-            SizedBox(height: 48, child: ElevatedButton(onPressed: isLoading ? null : () => _submit(context), style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('ĐỔI MẬT KHẨU', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))),
+            SizedBox(height: 48, child: ElevatedButton(onPressed: isLoading ? null : () => _submit(context), style: ElevatedButton.styleFrom(backgroundColor: kombuGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('ĐỔI MẬT KHẨU', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))),
           ],
         ),
       ),

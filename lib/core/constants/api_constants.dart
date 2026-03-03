@@ -1,21 +1,26 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/foundation.dart';
 
-/// Tập trung toàn bộ URL và endpoint của API
+/// API URLs and endpoints
 class ApiConstants {
   ApiConstants._();
 
-  // ── Base URL ──────────────────────────────────────────────────────────
-  // Android Emulator: 10.0.2.2 trỏ về localhost của máy host
-  // Windows/macOS/Linux/Web/iOS Simulator: dùng localhost
+  // Base URL
+  // Android Emulator: 10.0.2.2 maps to host localhost
+  // Windows/macOS/Linux/Web/iOS Simulator: use localhost
   static String get baseUrl {
+    const env = String.fromEnvironment('API_BASE_URL');
+    if (env.isNotEmpty) return env;
+    const envScheme = String.fromEnvironment('API_SCHEME');
+    final scheme = envScheme.isNotEmpty ? envScheme : 'http';
+    final port = scheme == 'https' ? 7133 : 5000;
     if (!kIsWeb && Platform.isAndroid) {
-      return 'http://10.0.2.2:5000';   // Android Emulator → HTTP port
+      return '$scheme://10.0.2.2:$port';
     }
-    return 'http://localhost:5000';    // Windows / iOS Sim / Web → HTTP port
+    return '$scheme://localhost:$port';
   }
 
-  // ── Auth endpoints ────────────────────────────────────────────────────
+  // Auth endpoints
   static const String login = '/api/auth/login';
   static const String verify2faLogin = '/api/auth/login/2fa/verify';
   static const String registerInitiate = '/api/auth/register/initiate';
@@ -23,22 +28,22 @@ class ApiConstants {
   static const String googleLogin = '/api/auth/login/google';
   static const String registerDirect = '/api/auth/register/direct';
 
-  // ── User endpoints ────────────────────────────────────────────────────
+  // User endpoints
   static const String users = '/api/users';
   static String userById(String id) => '/api/users/$id';
   static String userUploadAvatar(String id) => '/api/users/$id/avatar';
   static String userChangePassword(String id) => '/api/users/$id/password';
-  static String userByEmail(String email) => '/api/users/email/$email'; // If needed
+  static String userByEmail(String email) => '/api/users/email/$email';
 
-  // ── Category endpoints ─────────────────────────────────────────────
+  // Category endpoints
   static const String categories = '/api/categories';
   static String categoryById(String id) => '/api/categories/$id';
 
-  // ── Product endpoints ──────────────────────────────────────────────
+  // Product endpoints
   static const String products = '/api/products';
   static String productById(String id) => '/api/products/$id';
 
-  // ── Service endpoints ──────────────────────────────────────────────
+  // Service endpoints
   static const String services = '/api/services';
   static String serviceById(String id) => '/api/services/$id';
 
@@ -48,7 +53,7 @@ class ApiConstants {
     return '${baseUrl}$relativePath';
   }
 
-  // ── Timeout (milliseconds) ────────────────────────────────────────────
+  // Timeout (milliseconds)
   static const int connectTimeout = 15000;
   static const int receiveTimeout = 15000;
 }
