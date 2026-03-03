@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/user.dart';
+import '../../../main.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -15,100 +16,234 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthLoggedOut) {
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Trang chủ'),
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          actions: [
-            if (user.id != null)
-              IconButton(
-                icon: const Icon(Icons.person_outline),
-                tooltip: 'Hồ sơ cá nhân',
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(userId: user.id!))),
-              ),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if (state is AuthLoading) {
-                  return const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)));
-                }
-                return IconButton(icon: const Icon(Icons.logout), tooltip: 'Đăng xuất', onPressed: () => context.read<AuthBloc>().add(const LogoutEvent()));
-              },
-            ),
-          ],
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: user.id != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(userId: user.id!))) : null,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundColor: Colors.blue.shade100,
-                          backgroundImage: (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
-                              ? NetworkImage(ApiConstants.getFullImageUrl(user.avatarUrl))
-                              : null,
-                          child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
-                              ? Text(
-                                  (user.fullName?.isNotEmpty == true ? user.fullName![0] : '?').toUpperCase(),
-                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue),
-                                )
-                              : null,
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          // Lấy user từ state mới nhất để đảm bảo đồng bộ khi sửa ở Profile
+          final currentUser = (state is AuthSuccess) ? state.user : user;
+
+          return Scaffold(
+            backgroundColor: const Color(0xFFF5F5F7),
+            body: CustomScrollView(
+              slivers: [
+                // ── App bar ────────────────────────────────────────────────────
+                SliverAppBar(
+                  expandedHeight: 120,
+                  pinned: true,
+                  backgroundColor: cs.primary,
+                  foregroundColor: Colors.white,
+                  flexibleSpace: FlexibleSpaceBar(
+                    titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                    title: Text(
+                      'Xin chào, ${currentUser.fullName?.split(' ').last ?? 'bạn'} 👋',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [cs.primary, cs.secondary],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(user.fullName ?? 'Người dùng', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 4),
-                              Text(user.email, style: TextStyle(color: Colors.grey.shade600)),
-                              if (user.role != null) ...[
-                                const SizedBox(height: 4),
-                                Chip(label: Text(user.role!, style: const TextStyle(fontSize: 12)), backgroundColor: Colors.blue.shade50, padding: EdgeInsets.zero),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
-                      ],
+                      ),
                     ),
                   ),
+                  actions: [
+                    if (currentUser.id != null)
+                      IconButton(
+                        icon: const Icon(Icons.person_outline),
+                        tooltip: 'Hồ sơ cá nhân',
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  ProfilePage(userId: currentUser.id!)),
+                        ),
+                      ),
+                    if (state is AuthLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        ),
+                      )
+                    else
+                      IconButton(
+                        icon: const Icon(Icons.logout_rounded),
+                        tooltip: 'Đăng xuất',
+                        onPressed: () =>
+                            context.read<AuthBloc>().add(const LogoutEvent()),
+                      ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              _MenuItem(
-                icon: Icons.person_outline,
-                title: 'Hồ sơ cá nhân',
-                subtitle: 'Chỉnh sửa thông tin & đổi mật khẩu',
-                onTap: user.id != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(userId: user.id!))) : null,
-              ),
-              if (user.role?.toLowerCase() == 'admin') ...[
-                const SizedBox(height: 8),
-                _MenuItem(
-                  icon: Icons.admin_panel_settings_outlined,
-                  title: 'Quản lý người dùng',
-                  subtitle: 'Xem, chỉnh sửa và xoá tài khoản',
-                  color: Colors.indigo,
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.admin),
+
+                // ── Body ───────────────────────────────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Profile card
+                      _ProfileCard(user: currentUser, cs: cs),
+                      const SizedBox(height: 20),
+
+                      // Section title
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 10, left: 2),
+                        child: Text(
+                          'Chức năng',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: cafeNoir),
+                        ),
+                      ),
+
+                      // Menu items
+                      _MenuTile(
+                        icon: Icons.person_outline,
+                        iconColor: cs.primary,
+                        title: 'Hồ sơ cá nhân',
+                        subtitle: 'Xem và chỉnh sửa thông tin',
+                        onTap: currentUser.id != null
+                            ? () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          ProfilePage(userId: currentUser.id!)),
+                                )
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+
+                      _MenuTile(
+                        icon: Icons.sports_tennis,
+                        iconColor: mossGreen,
+                        title: 'Đặt sân',
+                        subtitle: 'Tìm và đặt sân cầu lông',
+                        onTap: () {}, // TODO: navigate to booking
+                      ),
+
+                      if (currentUser.role?.toLowerCase() == 'admin') ...[
+                        const SizedBox(height: 10),
+                        _MenuTile(
+                          icon: Icons.admin_panel_settings_outlined,
+                          iconColor: cafeNoir,
+                          title: 'Quản lý người dùng',
+                          subtitle: 'Xem, chỉnh sửa và xoá tài khoản',
+                          onTap: () =>
+                              Navigator.pushNamed(context, AppRoutes.admin),
+                        ),
+                      ],
+                    ]),
+                  ),
                 ),
               ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ── Profile card ──────────────────────────────────────────────────────────────
+class _ProfileCard extends StatelessWidget {
+  final User user;
+  final ColorScheme cs;
+  const _ProfileCard({required this.user, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: user.id != null
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => ProfilePage(userId: user.id!)),
+                )
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: cs.primaryContainer,
+                backgroundImage:
+                    (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(
+                            ApiConstants.getFullImageUrl(user.avatarUrl))
+                        : null,
+                child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
+                    ? Text(
+                        (user.fullName?.isNotEmpty == true
+                                ? user.fullName![0]
+                                : '?')
+                            .toUpperCase(),
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: cs.primary),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.fullName ?? 'Người dùng',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(user.email,
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 12)),
+                    if (user.role != null) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          user.role!,
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: cs.primary),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
             ],
           ),
         ),
@@ -117,28 +252,64 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _MenuItem extends StatelessWidget {
+// ── Menu tile ─────────────────────────────────────────────────────────────────
+class _MenuTile extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
-  final Color? color;
 
-  const _MenuItem({required this.icon, required this.title, required this.subtitle, this.onTap, this.color});
+  const _MenuTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? Colors.blue;
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: CircleAvatar(backgroundColor: c.withOpacity(0.1), child: Icon(icon, color: c)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14, color: Colors.grey.shade400),
+            ],
+          ),
+        ),
       ),
     );
   }
