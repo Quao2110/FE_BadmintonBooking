@@ -48,8 +48,9 @@ class ApiConstants {
   static String serviceById(String id) => '/api/services/$id';
 
   // Notification endpoints
-  static const String notifications = '/api/notifications';
-  static String notificationMarkAsRead(String id) => '/api/notifications/$id/read';
+  static const String notifications = '/api/Notifications';
+  static String notificationsByUserId(String userId) => '/api/Notifications/user/$userId';
+  static String notificationMarkAsRead(String id) => '/api/Notifications/mark-as-read/$id';
 
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';
