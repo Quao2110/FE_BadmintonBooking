@@ -17,7 +17,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthLoggedOut) {
@@ -30,127 +29,157 @@ class HomeScreen extends StatelessWidget {
       },
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          // Lấy user từ state mới nhất để đảm bảo đồng bộ khi sửa ở Profile
           final currentUser = (state is AuthSuccess) ? state.user : user;
 
           return Scaffold(
-            backgroundColor: const Color(0xFFF5F5F7),
+            backgroundColor: boneColor,
             body: CustomScrollView(
               slivers: [
-                // ── App bar ────────────────────────────────────────────────────
+                // ── Modern AppBar ─────────────────────────────────────────────
                 SliverAppBar(
-                  expandedHeight: 120,
+                  expandedHeight: 180,
                   pinned: true,
-                  backgroundColor: cs.primary,
+                  backgroundColor: kombuGreen,
                   foregroundColor: Colors.white,
+                  elevation: 0,
                   flexibleSpace: FlexibleSpaceBar(
-                    titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                    titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     title: Text(
                       'Xin chào, ${currentUser.fullName?.split(' ').last ?? 'bạn'} 👋',
                       style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [cs.primary, cs.secondary],
-                        ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
                       ),
+                    ),
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [kombuGreen, mossGreen],
+                            ),
+                          ),
+                        ),
+                        // Decorative elements
+                        Positioned(
+                          top: -20,
+                          right: -20,
+                          child: CircleAvatar(
+                            radius: 80,
+                            backgroundColor: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 40,
+                          left: 20,
+                          child: Icon(
+                            Icons.sports_tennis,
+                            size: 100,
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   actions: [
-                    if (currentUser.id != null)
-                      IconButton(
-                        icon: const Icon(Icons.person_outline),
-                        tooltip: 'Hồ sơ cá nhân',
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  ProfilePage(userId: currentUser.id!)),
-                        ),
-                      ),
-                    if (state is AuthLoading)
-                      const Padding(
-                        padding: EdgeInsets.all(14),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        ),
-                      )
-                    else
-                      IconButton(
-                        icon: const Icon(Icons.logout_rounded),
-                        tooltip: 'Đăng xuất',
-                        onPressed: () =>
-                            context.read<AuthBloc>().add(const LogoutEvent()),
-                      ),
+                    _NotificationButton(),
+                    IconButton(
+                      icon: const Icon(Icons.logout_rounded),
+                      onPressed: () => context.read<AuthBloc>().add(const LogoutEvent()),
+                    ),
                   ],
                 ),
 
-                // ── Body ───────────────────────────────────────────────────────
+                // ── Content ──────────────────────────────────────────────────
                 SliverPadding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      // Profile card
-                      _ProfileCard(user: currentUser, cs: cs),
-                      const SizedBox(height: 20),
+                      // Sleek Profile Snippet
+                      _HomeProfileSnippet(user: currentUser),
+                      const SizedBox(height: 28),
+                      
+                      // Section Header
+                      const _SectionHeader(title: 'Dịch vụ chính'),
+                      const SizedBox(height: 16),
 
-                      // Section title
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 10, left: 2),
-                        child: Text(
-                          'Chức năng',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: cafeNoir),
+                      // Quick Actions Grid
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: _FeatureCard(
+                                  title: 'Đặt sân ngay',
+                                  icon: Icons.calendar_today_rounded,
+                                  color: kombuGreen,
+                                  onTap: () {},
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _FeatureCard(
+                                  title: 'Cửa hàng',
+                                  icon: Icons.shopping_bag_outlined,
+                                  color: mossGreen,
+                                  onTap: () => Navigator.pushNamed(context, AppRoutes.storeList),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Dịch vụ',
+                              icon: Icons.cleaning_services_outlined,
+                              color: tanColor,
+                              onTap: () => Navigator.pushNamed(context, AppRoutes.serviceList),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Lịch sử',
+                              icon: Icons.history_rounded,
+                              color: cafeNoir,
+                              onTap: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 28),
+                      const _SectionHeader(title: 'Tài khoản'),
+                      const SizedBox(height: 16),
+
+                      // Account options
+                      _MenuListItem(
+                        label: 'Thông tin cá nhân',
+                        icon: Icons.person_outline_rounded,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ProfilePage(userId: currentUser.id ?? '')),
                         ),
                       ),
-
-                      // Menu items
-                      _MenuTile(
-                        icon: Icons.person_outline,
-                        iconColor: cs.primary,
-                        title: 'Hồ sơ cá nhân',
-                        subtitle: 'Xem và chỉnh sửa thông tin',
-                        onTap: currentUser.id != null
-                            ? () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          ProfilePage(userId: currentUser.id!)),
-                                )
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-
-                      _MenuTile(
-                        icon: Icons.sports_tennis,
-                        iconColor: mossGreen,
-                        title: 'Đặt sân',
-                        subtitle: 'Tìm và đặt sân cầu lông',
-                        onTap: () {}, // TODO: navigate to booking
-                      ),
-
+                      
                       if (currentUser.role?.toLowerCase() == 'admin') ...[
-                        const SizedBox(height: 10),
-                        _MenuTile(
+                        const SizedBox(height: 12),
+                        _MenuListItem(
+                          label: 'Quản lý hệ thống (Admin)',
                           icon: Icons.admin_panel_settings_outlined,
-                          iconColor: cafeNoir,
-                          title: 'Quản lý người dùng',
-                          subtitle: 'Xem, chỉnh sửa và xoá tài khoản',
-                          onTap: () =>
-                              Navigator.pushNamed(context, AppRoutes.admin),
+                          onTap: () => Navigator.pushNamed(context, AppRoutes.admin),
                         ),
                       ],
+                      const SizedBox(height: 40),
                     ]),
                   ),
                 ),
@@ -163,88 +192,188 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// ── Profile card ──────────────────────────────────────────────────────────────
-class _ProfileCard extends StatelessWidget {
-  final User user;
-  final ColorScheme cs;
-  const _ProfileCard({required this.user, required this.cs});
+class _NotificationButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none_rounded),
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.notifications),
+        ),
+        Positioned(
+          right: 12,
+          top: 12,
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: tanColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: user.id != null
-            ? () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => ProfilePage(userId: user.id!)),
-                )
-            : null,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: cs.primaryContainer,
-                backgroundImage:
-                    (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
-                        ? NetworkImage(
-                            ApiConstants.getFullImageUrl(user.avatarUrl))
-                        : null,
-                child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
-                    ? Text(
-                        (user.fullName?.isNotEmpty == true
-                                ? user.fullName![0]
-                                : '?')
-                            .toUpperCase(),
-                        style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: cs.primary),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.fullName ?? 'Người dùng',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(user.email,
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 12)),
-                    if (user.role != null) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          user.role!,
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: cs.primary),
-                        ),
-                      ),
-                    ],
-                  ],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: kombuGreen,
+          ),
+        ),
+        TextButton(
+          onPressed: () {},
+          child: const Text('Xem tất cả', style: TextStyle(color: mossGreen, fontWeight: FontWeight.w600)),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeProfileSnippet extends StatelessWidget {
+  final User user;
+  const _HomeProfileSnippet({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: kombuGreen.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _AvatarSmall(user: user),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.fullName ?? 'Quý khách',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
+                Text(
+                  user.email,
+                  style: TextStyle(color: cafeNoir.withOpacity(0.5), fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20, color: mossGreen),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ProfilePage(userId: user.id ?? '')),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _AvatarSmall extends StatelessWidget {
+  final User user;
+  const _AvatarSmall({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: boneColor, width: 2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+          ? Image.network(
+              ApiConstants.getFullImageUrl(user.avatarUrl),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => _letterAvatar(),
+            )
+          : _letterAvatar(),
+    );
+  }
+
+  Widget _letterAvatar() {
+    return Container(
+      color: mossGreen.withOpacity(0.1),
+      child: Center(
+        child: Text(
+          (user.fullName?.isNotEmpty == true ? user.fullName![0] : '?').toUpperCase(),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: kombuGreen),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _FeatureCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.1)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 28),
               ),
-              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
             ],
           ),
         ),
@@ -253,64 +382,33 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
-// ── Menu tile ─────────────────────────────────────────────────────────────────
-class _MenuTile extends StatelessWidget {
+class _MenuListItem extends StatelessWidget {
+  final String label;
   final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
-  const _MenuTile({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-  });
+  const _MenuListItem({required this.label, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ListTile(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 2),
-                    Text(subtitle,
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 12)),
-                  ],
-                ),
-              ),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14, color: Colors.grey.shade400),
-            ],
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: boneColor,
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: Icon(icon, color: kombuGreen, size: 20),
         ),
+        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        trailing: const Icon(Icons.chevron_right_rounded, color: boneColor),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
