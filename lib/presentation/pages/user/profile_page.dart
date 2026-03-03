@@ -16,6 +16,7 @@ import '../../../data/models/user/change_password_request.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/colors.dart';
 
 class ProfilePage extends StatelessWidget {
   final String userId;

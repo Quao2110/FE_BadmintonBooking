@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import '../domain/entities/user.dart';
+import '../domain/entities/product_entity.dart';
 import '../presentation/pages/auth/login_page.dart';
 import '../presentation/pages/auth/register_page.dart';
 import '../presentation/pages/auth/otp_verify_page.dart';
 import '../presentation/pages/auth/home_screen.dart';
 import '../presentation/pages/user/profile_page.dart';
 import '../presentation/pages/admin/admin_users_page.dart';
+import '../presentation/pages/store/product_list_page.dart';
+import '../presentation/pages/store/product_detail_page.dart';
+import '../presentation/pages/store/service_list_page.dart';
+import '../presentation/pages/store/service_detail_page.dart';
 
 /// Tên các route trong app
 class AppRoutes {
@@ -17,6 +22,10 @@ class AppRoutes {
   static const String home     = '/home';
   static const String profile  = '/profile';
   static const String admin    = '/admin/users';
+  static const String storeList = '/store';
+  static const String storeDetail = '/store/detail';
+  static const String serviceList = '/store/services';
+  static const String serviceDetail = '/store/services/detail';
 }
 
 /// Tham số truyền qua route
@@ -34,6 +43,16 @@ class HomeArgs {
 class ProfileArgs {
   final String userId;
   const ProfileArgs(this.userId);
+}
+
+class ProductDetailArgs {
+  final ProductEntity product;
+  const ProductDetailArgs(this.product);
+}
+
+class ServiceDetailArgs {
+  final String serviceId;
+  const ServiceDetailArgs(this.serviceId);
 }
 
 /// Router trung tâm – dùng onGenerateRoute trong MaterialApp
@@ -67,6 +86,22 @@ class AppRouter {
 
       case AppRoutes.admin:
         return _slide(const AdminUsersPage());
+
+      case AppRoutes.storeList:
+        return _slide(const ProductListPage());
+
+      case AppRoutes.storeDetail:
+        final args = settings.arguments as ProductDetailArgs?;
+        if (args == null) return _slide(const ProductListPage());
+        return _slide(ProductDetailPage(product: args.product));
+
+      case AppRoutes.serviceList:
+        return _slide(const ServiceListPage());
+
+      case AppRoutes.serviceDetail:
+        final args = settings.arguments as ServiceDetailArgs?;
+        if (args == null) return _slide(const ServiceListPage());
+        return _slide(ServiceDetailPage(serviceId: args.serviceId));
 
       default:
         return _slide(const LoginScreen());
