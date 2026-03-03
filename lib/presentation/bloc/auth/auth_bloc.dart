@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../data/datasources/auth_api_service.dart';
@@ -23,7 +24,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   final GoogleSignIn? _googleSignIn =
       (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
-          ? GoogleSignIn(scopes: ['email', 'profile'])
+          ? GoogleSignIn(
+              scopes: ['email', 'profile'],
+              // Web Client ID: Dùng để lấy idToken
+              serverClientId: '76720198371-0srmn1e9gddi9naqkpe3htme41v4lags.apps.googleusercontent.com',
+              // Android Client ID: Dùng để định danh app trên Android (nếu auto-detect lỗi)
+              clientId: '76720198371-jrrlvuqua37vdvf6r01mbnhum3stk2rk.apps.googleusercontent.com',
+            )
           : null;
 
   AuthBloc({
@@ -105,9 +112,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await repository.googleLogin(GoogleLoginRequest(idToken: idToken));
       emit(AuthSuccess(user: user));
     } catch (e) {
-      String msg = e.toString().replaceFirst('Exception: ', '');
-      if (msg.contains('sign_in_failed')) {
-        msg = 'Lỗi cấu hình Google Sign-In (có thể thiếu SHA-1 hoặc google-services.json). Chi tiết: $msg';
+      debugPrint('Google Sign-In Error Detail: $e');
+      String msg = e.toString();
+      if (e is PlatformException) {
+          msg = 'Lỗi [${e.code}]: ${e.message} - ${e.details}';
       }
       emit(AuthFailure(message: msg));
     }
