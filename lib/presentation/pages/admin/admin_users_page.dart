@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../../data/models/user/update_user_request.dart';
+import '../../../main.dart';
 import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
@@ -94,19 +95,18 @@ class _UserTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: isActive ? Colors.indigo.shade50 : Colors.grey.shade200,
+          backgroundColor: mossGreen.withOpacity(0.1),
           backgroundImage: (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
               ? NetworkImage(ApiConstants.getFullImageUrl(user.avatarUrl))
               : null,
           child: (user.avatarUrl == null || user.avatarUrl!.isEmpty)
-              ? Text((user.fullName?.isNotEmpty == true ? user.fullName![0] : user.email[0]).toUpperCase(), style: TextStyle(color: isActive ? Colors.indigo : Colors.grey, fontWeight: FontWeight.bold))
+              ? Text((user.fullName?.isNotEmpty == true ? user.fullName![0] : user.email[0]).toUpperCase(), style: const TextStyle(color: kombuGreen, fontWeight: FontWeight.bold))
               : null,
         ),
         title: Row(children: [
           Expanded(child: Text(user.fullName ?? '(Chưa đặt tên)', style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
           _RoleBadge(role: user.role),
         ]),
-// ...
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const SizedBox(height: 2),
           Text(user.email, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
