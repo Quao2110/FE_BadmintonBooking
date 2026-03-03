@@ -39,6 +39,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<Verify2faLoginEvent>(_onVerify2faLogin);
     on<GoogleLoginEvent>(_onGoogleLogin);
     on<LogoutEvent>(_onLogout);
+    on<UpdateAuthUserEvent>(_onUpdateUser);
+  }
+
+  void _onUpdateUser(UpdateAuthUserEvent event, Emitter<AuthState> emit) {
+    emit(AuthSuccess(user: event.user));
   }
 
   Future<void> _onCheckAuth(CheckAuthEvent event, Emitter<AuthState> emit) async {

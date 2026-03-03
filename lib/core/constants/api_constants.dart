@@ -10,9 +10,9 @@ class ApiConstants {
   // Windows/macOS/Linux/Web/iOS Simulator: dùng localhost
   static String get baseUrl {
     if (!kIsWeb && Platform.isAndroid) {
-      return 'http://10.0.2.2:5151';   // Android Emulator → HTTP port
+      return 'https://10.0.2.2:7133';
     }
-    return 'https://localhost:7133';    // Windows / iOS Sim / Web → HTTPS port
+    return 'https://localhost:7133';
   }
 
   // ── Auth endpoints ────────────────────────────────────────────────────
