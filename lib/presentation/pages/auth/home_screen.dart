@@ -9,6 +9,7 @@ import 'login_page.dart';
 import '../user/profile_page.dart';
 import '../../../routes/app_router.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/colors.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;

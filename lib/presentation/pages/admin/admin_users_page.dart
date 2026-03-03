@@ -10,6 +10,7 @@ import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/colors.dart';
 import '../../../shared/widgets/empty_widget.dart';
 import '../../../shared/widgets/loading_widget.dart';
 
