@@ -9,9 +9,9 @@ class NotificationRemoteDataSource {
   final Dio dio;
   NotificationRemoteDataSource({Dio? dio}) : dio = dio ?? DioClient.instance;
 
-  Future<ApiResponse<List<NotificationModel>>> getNotifications() async {
+  Future<ApiResponse<List<NotificationModel>>> getNotifications(String userId) async {
     try {
-      final res = await dio.get(ApiConstants.notifications);
+      final res = await dio.get(ApiConstants.notificationsByUserId(userId));
       return ApiResponse.fromJson(
         res.data, 
         (json) => (json as List).map((e) => NotificationModel.fromJson(e as Map<String, dynamic>)).toList()
@@ -27,6 +27,18 @@ class NotificationRemoteDataSource {
   Future<ApiResponse<void>> markAsRead(String id) async {
     try {
       final res = await dio.post(ApiConstants.notificationMarkAsRead(id));
+      return ApiResponse.fromJson(res.data, (json) => null);
+    } on DioException catch (e) {
+      if (e.error is Exception) throw e.error!;
+      throw ServerException(message: e.message ?? 'Lỗi kết nối máy chủ');
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<void>> createNotification(Map<String, dynamic> request) async {
+    try {
+      final res = await dio.post(ApiConstants.notifications, data: request);
       return ApiResponse.fromJson(res.data, (json) => null);
     } on DioException catch (e) {
       if (e.error is Exception) throw e.error!;
