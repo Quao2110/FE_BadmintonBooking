@@ -10,6 +10,10 @@ import '../user/profile_page.dart';
 import '../../../routes/app_router.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/colors.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../bloc/shop/shop_bloc.dart';
+import '../../bloc/shop/shop_state.dart';
+import '../court/court_list_page.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;
@@ -105,7 +109,11 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 28),
                       
                       // Section Header
-                      const _SectionHeader(title: 'Dịch vụ chính'),
+                      _SectionHeader(
+                        title: 'Dịch vụ chính',
+                        seeAllText: 'Xem tất cả sân',
+                        onSeeAll: () => Navigator.pushNamed(context, AppRoutes.courtList),
+                      ),
                       const SizedBox(height: 16),
 
                       // Quick Actions Grid
@@ -157,6 +165,66 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                       
+                      const SizedBox(height: 32),
+                      const _SectionHeader(title: 'Vị trí của chúng tôi'),
+                      const SizedBox(height: 16),
+
+                      // Shop Location Map
+                      BlocBuilder<ShopBloc, ShopState>(
+                        builder: (context, shopState) {
+                          if (shopState is ShopLoading) {
+                            return const SizedBox(
+                              height: 200,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          } else if (shopState is ShopLoaded) {
+                            final shop = shopState.shop;
+                            if (shop.latitude != null && shop.longitude != null) {
+                              final shopPos = LatLng(shop.latitude!, shop.longitude!);
+                              return Container(
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white, width: 4),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: GoogleMap(
+                                  initialCameraPosition: CameraPosition(
+                                    target: shopPos,
+                                    zoom: 15,
+                                  ),
+                                  markers: {
+                                    Marker(
+                                      markerId: const MarkerId('shop'),
+                                      position: shopPos,
+                                      infoWindow: InfoWindow(
+                                        title: shop.id == 'current' ? 'Vị trí của bạn' : shop.shopName,
+                                        snippet: shop.address,
+                                      ),
+                                    ),
+                                  },
+                                  onMapCreated: (controller) {},
+                                  myLocationEnabled: true,
+                                  zoomControlsEnabled: false,
+                                  mapToolbarEnabled: false,
+                                ),
+                              );
+                            }
+                          }
+                          return const SizedBox(
+                            height: 200,
+                            child: Center(child: Text('Đang tải vị trí shop...')),
+                          );
+                        },
+                      ),
+
                       const SizedBox(height: 28),
                       const _SectionHeader(title: 'Tài khoản'),
                       const SizedBox(height: 16),
@@ -220,7 +288,14 @@ class _NotificationButton extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  const _SectionHeader({required this.title});
+  final String? seeAllText;
+  final VoidCallback? onSeeAll;
+
+  const _SectionHeader({
+    required this.title,
+    this.seeAllText,
+    this.onSeeAll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -235,10 +310,33 @@ class _SectionHeader extends StatelessWidget {
             color: kombuGreen,
           ),
         ),
-        TextButton(
-          onPressed: () {},
-          child: const Text('Xem tất cả', style: TextStyle(color: mossGreen, fontWeight: FontWeight.w600)),
-        ),
+        if (onSeeAll != null)
+          InkWell(
+            onTap: onSeeAll,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: mossGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    seeAllText ?? 'Xem tất cả',
+                    style: const TextStyle(
+                      color: mossGreen,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: mossGreen),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }

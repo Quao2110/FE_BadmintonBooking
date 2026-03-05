@@ -43,14 +43,25 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     try {
       final courts = await courtRepository.getAll();
       // Lọc chỉ lấy sân active
-      final activeCourts = courts.where((c) => c.status.toLowerCase() == 'active').toList();
+      final activeCourts = courts.where((c) => c.status.toLowerCase() == 'active' || c.status.toLowerCase() == 'available').toList();
       final services = await serviceRepository.getAll();
       
+      final now = DateTime.now();
       emit(BookingDataLoaded(
         courts: activeCourts,
-        selectedDate: DateTime.now(),
+        selectedDate: now,
         services: services.where((s) => s.isActive).toList(),
       ));
+
+      // Auto-select court if initialCourtId provided
+      if (event.initialCourtId != null) {
+        if (activeCourts.any((c) => c.id == event.initialCourtId)) {
+          add(LoadAvailabilityEvent(
+            courtId: event.initialCourtId!,
+            date: now,
+          ));
+        }
+      }
     } catch (e) {
       emit(BookingError(e.toString().replaceFirst('Exception: ', '')));
     }

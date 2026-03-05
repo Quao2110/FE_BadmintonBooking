@@ -14,6 +14,8 @@ import '../presentation/pages/store/service_detail_page.dart';
 import '../presentation/pages/user/notification_page.dart';
 import '../presentation/pages/booking/booking_page.dart';
 import '../presentation/pages/booking/booking_history_page.dart';
+import '../presentation/pages/court/court_list_page.dart';
+import '../presentation/pages/court/court_detail_page.dart';
 
 /// Tên các route trong app
 class AppRoutes {
@@ -32,6 +34,8 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String booking = '/booking';
   static const String bookingHistory = '/booking/history';
+  static const String courtList = '/courts';
+  static const String courtDetail = '/court-detail';
 }
 
 /// Tham số truyền qua route
@@ -113,10 +117,19 @@ class AppRouter {
         return _slide(const NotificationPage());
 
       case AppRoutes.booking:
-        return _slide(const BookingPage());
+        final initialCourtId = settings.arguments as String?;
+        return _slide(BookingPage(initialCourtId: initialCourtId));
 
       case AppRoutes.bookingHistory:
         return _slide(const BookingHistoryPage());
+
+      case AppRoutes.courtList:
+        return _slide(const CourtListPage());
+
+      case AppRoutes.courtDetail:
+        final courtId = settings.arguments as String?;
+        if (courtId == null) return _slide(const CourtListPage());
+        return _slide(CourtDetailPage(courtId: courtId));
 
       default:
         return _slide(const LoginScreen());
