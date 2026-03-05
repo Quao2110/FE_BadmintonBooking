@@ -9,7 +9,10 @@ abstract class BookingEvent extends Equatable {
 
 /// Load danh sách sân
 class LoadCourtsEvent extends BookingEvent {
-  const LoadCourtsEvent();
+  final String? initialCourtId;
+  const LoadCourtsEvent({this.initialCourtId});
+  @override
+  List<Object?> get props => [initialCourtId];
 }
 
 /// Thay đổi ngày (độc lập với việc chọn sân)
