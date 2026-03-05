@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_notification.dart';
 import '../../bloc/booking/booking_bloc.dart';
 import '../../bloc/booking/booking_event.dart';
 import '../../bloc/booking/booking_state.dart';
+import 'booking_success_page.dart';
 
 class BookingPage extends StatelessWidget {
   const BookingPage({super.key});
@@ -37,8 +38,13 @@ class _BookingView extends StatelessWidget {
       body: BlocConsumer<BookingBloc, BookingState>(
         listener: (context, state) {
           if (state is BookingCreated) {
-            AppNotification.showInfo('Đặt sân thành công!');
-            Navigator.of(context).pop(state.booking);
+            // Navigate to success page
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BookingSuccessPage(booking: state.booking),
+              ),
+            );
           }
           if (state is BookingDataLoaded && state.error != null) {
             AppNotification.showError(state.error!);
