@@ -56,6 +56,11 @@ class ApiConstants {
   static const String courts = '/api/courts';
   static String courtById(String id) => '/api/courts/$id';
 
+  // Shop endpoints
+  static const String shops = '/api/Shops';
+  static String shopById(String id) => '/api/Shops/$id';
+  static const String shopDistance = '/api/Shops/distance';
+
   // Booking endpoints
   static const String bookings = '/api/bookings';
   static const String bookingAvailability = '/api/bookings/availability';

@@ -5,6 +5,9 @@ import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/auth/auth_event.dart';
+import 'presentation/bloc/court/court_bloc.dart';
+import 'presentation/bloc/shop/shop_bloc.dart';
+import 'presentation/bloc/shop/shop_event.dart';
 import 'routes/app_router.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -28,8 +31,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthBloc>(
-      create: (_) => AuthBloc.create()..add(const CheckAuthEvent()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc.create()..add(const CheckAuthEvent()),
+        ),
+        BlocProvider<ShopBloc>(
+          create: (_) => ShopBloc.create()..add(const LoadShopInfo()),
+        ),
+        BlocProvider<CourtBloc>(
+          create: (_) => CourtBloc.create(),
+        ),
+      ],
       child: MaterialApp(
         title: 'Badminton App',
         debugShowCheckedModeBanner: false,
