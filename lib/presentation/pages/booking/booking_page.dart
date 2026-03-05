@@ -859,18 +859,29 @@ class _BottomBookingBar extends StatelessWidget {
     final startTime = state.selectedStartTime;
     final endTime = state.selectedEndTime;
 
-    print('[BOOKING] onBookPressed called');
-    print('[BOOKING] selectedCourt: ${selectedCourt?.id}');
-    print('[BOOKING] startTime: $startTime');
-    print('[BOOKING] endTime: $endTime');
-    print('[BOOKING] availability: ${state.availability}');
-    print('[BOOKING] selectedSlotIndices: ${state.selectedSlotIndices}');
-
     if (selectedCourt == null || startTime == null || endTime == null) {
-      print('[BOOKING] Early return - something is null!');
       return;
     }
 
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _BookingConfirmDialog(
+        courtName: selectedCourt.courtName,
+        date: startTime,
+        startTime: startTime,
+        endTime: endTime,
+        totalPrice: state.totalPrice,
+        slotCount: state.selectedSlotIndices.length,
+        onConfirm: () {
+          Navigator.of(dialogContext).pop();
+          _submitBooking(context, selectedCourt.id, startTime, endTime);
+        },
+      ),
+    );
+  }
+
+  void _submitBooking(BuildContext context, String courtId, DateTime startTime, DateTime endTime) {
     // Build service items
     final serviceItems = <BookingServiceItemRequest>[];
     for (final entry in state.serviceQuantities.entries) {
@@ -883,13 +894,259 @@ class _BottomBookingBar extends StatelessWidget {
     }
 
     final request = BookingCreateRequest(
-      courtId: selectedCourt.id,
+      courtId: courtId,
       startTime: startTime,
       endTime: endTime,
       serviceItems: serviceItems.isNotEmpty ? serviceItems : null,
     );
 
     context.read<BookingBloc>().add(CreateBookingEvent(request));
+  }
+}
+
+/// Hộp thoại xác nhận đặt sân
+class _BookingConfirmDialog extends StatelessWidget {
+  final String courtName;
+  final DateTime date;
+  final DateTime startTime;
+  final DateTime endTime;
+  final double totalPrice;
+  final int slotCount;
+  final VoidCallback onConfirm;
+
+  const _BookingConfirmDialog({
+    required this.courtName,
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+    required this.totalPrice,
+    required this.slotCount,
+    required this.onConfirm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: AppColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.sports_tennis,
+                size: 32,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Title
+            const Text(
+              'Xác nhận đặt sân',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Details Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  _DetailRow(
+                    icon: Icons.sports_tennis,
+                    label: 'Sân',
+                    value: courtName,
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.calendar_today,
+                    label: 'Ngày',
+                    value: _formatDate(date),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.access_time,
+                    label: 'Giờ',
+                    value: _formatTimeRange(startTime, endTime),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.timer,
+                    label: 'Số slot',
+                    value: '$slotCount slot(s)',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Total Price
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Tổng tiền',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '${_formatPrice(totalPrice)}đ',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                      side: const BorderSide(color: AppColors.border),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Hủy',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onConfirm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.background,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text(
+                      'Xác nhận',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    return '$day/$month/$year';
+  }
+
+  String _formatTimeRange(DateTime start, DateTime end) {
+    final startHour = start.hour.toString().padLeft(2, '0');
+    final startMin = start.minute.toString().padLeft(2, '0');
+    final endHour = end.hour.toString().padLeft(2, '0');
+    final endMin = end.minute.toString().padLeft(2, '0');
+    return '$startHour:$startMin - $endHour:$endMin';
+  }
+
+  String _formatPrice(double value) {
+    final s = value.round().toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      final idx = s.length - i;
+      buf.write(s[i]);
+      if (idx > 1 && (idx - 1) % 3 == 0) buf.write('.');
+    }
+    return buf.toString();
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 60,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

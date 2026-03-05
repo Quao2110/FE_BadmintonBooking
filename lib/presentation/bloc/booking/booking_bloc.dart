@@ -167,24 +167,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onCreateBooking(CreateBookingEvent event, Emitter<BookingState> emit) async {
-    print('[BLOC] _onCreateBooking called');
-    print('[BLOC] Request: ${event.request.toJson()}');
-    
     final currentState = state;
-    if (currentState is! BookingDataLoaded) {
-      print('[BLOC] Early return - not BookingDataLoaded');
-      return;
-    }
+    if (currentState is! BookingDataLoaded) return;
 
     emit(currentState.copyWith(isCreating: true, clearError: true));
-    print('[BLOC] Calling API...');
 
     try {
       final booking = await bookingRepository.createBooking(event.request);
-      print('[BLOC] API Success! Booking: ${booking.id}');
       emit(BookingCreated(booking));
     } catch (e) {
-      print('[BLOC] API Error: $e');
       emit(currentState.copyWith(
         isCreating: false,
         error: e.toString().replaceFirst('Exception: ', ''),

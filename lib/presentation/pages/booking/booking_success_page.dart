@@ -117,11 +117,9 @@ class BookingSuccessPage extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRoutes.bookingHistory,
-                          (route) => route.settings.name == AppRoutes.home,
-                        );
+                        // Pop về home trước, rồi push history
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.pushNamed(context, AppRoutes.bookingHistory);
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
@@ -141,10 +139,8 @@ class BookingSuccessPage extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.popUntil(
-                          context,
-                          (route) => route.settings.name == AppRoutes.home,
-                        );
+                        // Pop về màn hình đầu tiên (Home)
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
