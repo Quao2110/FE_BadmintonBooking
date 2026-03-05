@@ -1,3 +1,4 @@
+
 import 'package:equatable/equatable.dart';
 import '../../../domain/entities/booking_entity.dart';
 import '../../../domain/entities/court_entity.dart';
@@ -57,7 +58,7 @@ class BookingDataLoaded extends BookingState {
     double servicePrice = 0;
     for (final entry in serviceQuantities.entries) {
       final service = services.firstWhere(
-        (s) => s.id == entry.key,
+            (s) => s.id == entry.key,
         orElse: () => services.first,
       );
       if (entry.value > 0) {
@@ -71,8 +72,8 @@ class BookingDataLoaded extends BookingState {
   /// Kiểm tra có thể booking hay không
   bool get canBook =>
       selectedCourt != null &&
-      selectedSlotIndices.isNotEmpty &&
-      !isCreating;
+          selectedSlotIndices.isNotEmpty &&
+          !isCreating;
 
   /// Lấy thời gian bắt đầu và kết thúc từ các slot đã chọn
   DateTime? get selectedStartTime {
@@ -118,17 +119,17 @@ class BookingDataLoaded extends BookingState {
 
   @override
   List<Object?> get props => [
-        courts,
-        selectedCourt,
-        selectedDate,
-        availability,
-        selectedSlotIndices,
-        services,
-        serviceQuantities,
-        isLoadingAvailability,
-        isCreating,
-        error,
-      ];
+    courts,
+    selectedCourt,
+    selectedDate,
+    availability,
+    selectedSlotIndices,
+    services,
+    serviceQuantities,
+    isLoadingAvailability,
+    isCreating,
+    error,
+  ];
 }
 
 /// Booking thành công
