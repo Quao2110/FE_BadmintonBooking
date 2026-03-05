@@ -19,7 +19,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.serviceRepository,
   }) : super(const BookingInitial()) {
     on<LoadCourtsEvent>(_onLoadCourts);
-    on<ChangeDateEvent>(_onChangeDate);
     on<LoadAvailabilityEvent>(_onLoadAvailability);
     on<SelectSlotEvent>(_onSelectSlot);
     on<ClearSlotsEvent>(_onClearSlots);
@@ -43,49 +42,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     try {
       final courts = await courtRepository.getAll();
       // Lọc chỉ lấy sân active
-      final activeCourts = courts.where((c) => c.status.toLowerCase() == 'active' || c.status.toLowerCase() == 'available').toList();
+      final activeCourts = courts.where((c) => c.status.toLowerCase() == 'active').toList();
       final services = await serviceRepository.getAll();
-      
-      final now = DateTime.now();
+
       emit(BookingDataLoaded(
         courts: activeCourts,
-        selectedDate: now,
+        selectedDate: DateTime.now(),
         services: services.where((s) => s.isActive).toList(),
       ));
-
-      // Auto-select court if initialCourtId provided
-      if (event.initialCourtId != null) {
-        if (activeCourts.any((c) => c.id == event.initialCourtId)) {
-          add(LoadAvailabilityEvent(
-            courtId: event.initialCourtId!,
-            date: now,
-          ));
-        }
-      }
     } catch (e) {
       emit(BookingError(e.toString().replaceFirst('Exception: ', '')));
-    }
-  }
-
-  /// Thay đổi ngày - nếu đã chọn sân thì load lại availability
-  void _onChangeDate(ChangeDateEvent event, Emitter<BookingState> emit) {
-    final currentState = state;
-    if (currentState is! BookingDataLoaded) return;
-
-    // Chỉ update ngày, clear slot đã chọn
-    emit(currentState.copyWith(
-      selectedDate: event.date,
-      selectedSlotIndices: {},
-      clearAvailability: true,
-      clearError: true,
-    ));
-
-    // Nếu đã chọn sân, tự động load availability cho ngày mới
-    if (currentState.selectedCourt != null) {
-      add(LoadAvailabilityEvent(
-        courtId: currentState.selectedCourt!.id,
-        date: event.date,
-      ));
     }
   }
 
@@ -94,7 +60,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     if (currentState is! BookingDataLoaded) return;
 
     final selectedCourt = currentState.courts.firstWhere((c) => c.id == event.courtId);
-    
+
     emit(currentState.copyWith(
       selectedCourt: selectedCourt,
       selectedDate: event.date,
@@ -105,7 +71,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     try {
       final availability = await bookingRepository.getAvailability(event.courtId, event.date);
-      
+
       // Re-check state after async operation
       final newState = state;
       if (newState is BookingDataLoaded) {
@@ -178,15 +144,24 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onCreateBooking(CreateBookingEvent event, Emitter<BookingState> emit) async {
+    print('[BLOC] _onCreateBooking called');
+    print('[BLOC] Request: ${event.request.toJson()}');
+
     final currentState = state;
-    if (currentState is! BookingDataLoaded) return;
+    if (currentState is! BookingDataLoaded) {
+      print('[BLOC] Early return - not BookingDataLoaded');
+      return;
+    }
 
     emit(currentState.copyWith(isCreating: true, clearError: true));
+    print('[BLOC] Calling API...');
 
     try {
       final booking = await bookingRepository.createBooking(event.request);
+      print('[BLOC] API Success! Booking: ${booking.id}');
       emit(BookingCreated(booking));
     } catch (e) {
+      print('[BLOC] API Error: $e');
       emit(currentState.copyWith(
         isCreating: false,
         error: e.toString().replaceFirst('Exception: ', ''),
