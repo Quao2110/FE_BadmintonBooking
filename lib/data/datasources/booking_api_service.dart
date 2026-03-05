@@ -73,9 +73,14 @@ class BookingRemoteDataSource {
       final res = await dio.get(ApiConstants.bookingMyHistory, queryParameters: params);
       return ApiResponse.fromJson(
         res.data,
-        (json) => (json as List)
-            .map((e) => BookingResponseModel.fromJson(e as Map<String, dynamic>))
-            .toList(),
+        (json) {
+          // API trả về PagedResult: { items: [...], page, pageSize, totalItems, totalPages }
+          final pagedResult = json as Map<String, dynamic>;
+          final items = pagedResult['items'] as List? ?? [];
+          return items
+              .map((e) => BookingResponseModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        },
       );
     } on DioException catch (e) {
       if (e.error is Exception) throw e.error!;
