@@ -52,6 +52,17 @@ class ApiConstants {
   static String notificationsByUserId(String userId) => '/api/Notifications/user/$userId';
   static String notificationMarkAsRead(String id) => '/api/Notifications/mark-as-read/$id';
 
+  // Court endpoints
+  static const String courts = '/api/courts';
+  static String courtById(String id) => '/api/courts/$id';
+
+  // Booking endpoints
+  static const String bookings = '/api/bookings';
+  static const String bookingAvailability = '/api/bookings/availability';
+  static const String bookingMyHistory = '/api/bookings/my-history';
+  static String bookingById(String id) => '/api/bookings/$id';
+  static String bookingCancel(String id) => '/api/bookings/$id/cancel';
+
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';
     if (relativePath.startsWith('http')) return relativePath;
