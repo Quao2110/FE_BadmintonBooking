@@ -12,6 +12,14 @@ class LoadCourtsEvent extends BookingEvent {
   const LoadCourtsEvent();
 }
 
+/// Thay đổi ngày (độc lập với việc chọn sân)
+class ChangeDateEvent extends BookingEvent {
+  final DateTime date;
+  const ChangeDateEvent(this.date);
+  @override
+  List<Object?> get props => [date];
+}
+
 /// Load slot availability cho sân theo ngày
 class LoadAvailabilityEvent extends BookingEvent {
   final String courtId;

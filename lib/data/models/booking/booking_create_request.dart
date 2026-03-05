@@ -12,10 +12,12 @@ class BookingCreateRequest {
   });
 
   Map<String, dynamic> toJson() {
+    // Gửi local time, KHÔNG convert sang UTC
+    // Server sẽ xử lý theo timezone của nó
     return {
       'courtId': courtId,
-      'startTime': startTime.toUtc().toIso8601String(),
-      'endTime': endTime.toUtc().toIso8601String(),
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
       if (serviceItems != null && serviceItems!.isNotEmpty)
         'serviceItems': serviceItems!.map((e) => e.toJson()).toList(),
     };

@@ -90,12 +90,7 @@ class _BookingContent extends StatelessWidget {
                 _DatePickerSection(
                   selectedDate: state.selectedDate,
                   onDateChanged: (date) {
-                    if (state.selectedCourt != null) {
-                      context.read<BookingBloc>().add(LoadAvailabilityEvent(
-                        courtId: state.selectedCourt!.id,
-                        date: date,
-                      ));
-                    }
+                    context.read<BookingBloc>().add(ChangeDateEvent(date));
                   },
                 ),
                 const SizedBox(height: 20),

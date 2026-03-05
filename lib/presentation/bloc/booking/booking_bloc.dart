@@ -19,6 +19,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.serviceRepository,
   }) : super(const BookingInitial()) {
     on<LoadCourtsEvent>(_onLoadCourts);
+    on<ChangeDateEvent>(_onChangeDate);
     on<LoadAvailabilityEvent>(_onLoadAvailability);
     on<SelectSlotEvent>(_onSelectSlot);
     on<ClearSlotsEvent>(_onClearSlots);
@@ -52,6 +53,28 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       ));
     } catch (e) {
       emit(BookingError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  /// Thay đổi ngày - nếu đã chọn sân thì load lại availability
+  void _onChangeDate(ChangeDateEvent event, Emitter<BookingState> emit) {
+    final currentState = state;
+    if (currentState is! BookingDataLoaded) return;
+
+    // Chỉ update ngày, clear slot đã chọn
+    emit(currentState.copyWith(
+      selectedDate: event.date,
+      selectedSlotIndices: {},
+      clearAvailability: true,
+      clearError: true,
+    ));
+
+    // Nếu đã chọn sân, tự động load availability cho ngày mới
+    if (currentState.selectedCourt != null) {
+      add(LoadAvailabilityEvent(
+        courtId: currentState.selectedCourt!.id,
+        date: event.date,
+      ));
     }
   }
 
