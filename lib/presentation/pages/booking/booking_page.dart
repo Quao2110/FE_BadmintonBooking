@@ -8,15 +8,51 @@ import '../../../shared/widgets/app_notification.dart';
 import '../../bloc/booking/booking_bloc.dart';
 import '../../bloc/booking/booking_event.dart';
 import '../../bloc/booking/booking_state.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../bloc/shop/shop_bloc.dart';
+import '../../bloc/shop/shop_event.dart';
+import '../../bloc/shop/shop_state.dart';
 import 'booking_success_page.dart';
 
-class BookingPage extends StatelessWidget {
-  const BookingPage({super.key});
+class BookingPage extends StatefulWidget {
+  final String? initialCourtId;
+  const BookingPage({super.key, this.initialCourtId});
+
+  @override
+  State<BookingPage> createState() => _BookingPageState();
+}
+
+class _BookingPageState extends State<BookingPage> {
+  @override
+  void initState() {
+    super.initState();
+    _calculateDistance();
+  }
+
+  Future<void> _calculateDistance() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+        Position position = await Geolocator.getCurrentPosition();
+        if (mounted) {
+          context.read<ShopBloc>().add(CalculateDistance(
+            userLat: position.latitude,
+            userLng: position.longitude,
+          ));
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting location for booking: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => BookingBloc.create()..add(const LoadCourtsEvent()),
+      create: (_) => BookingBloc.create()..add(LoadCourtsEvent(initialCourtId: widget.initialCourtId)),
       child: const _BookingView(),
     );
   }
@@ -284,28 +320,26 @@ class _CourtSelectionSection extends StatelessWidget {
       children: [
         const _SectionTitle(icon: Icons.sports_tennis, title: 'Chọn sân'),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 160,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: courts.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final court = courts[index];
-              final isSelected = selectedCourt?.id == court.id;
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: courts.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final court = courts[index];
+            final isSelected = selectedCourt?.id == court.id;
 
-              return _CourtCard(
-                court: court,
-                isSelected: isSelected,
-                onTap: () {
-                  context.read<BookingBloc>().add(LoadAvailabilityEvent(
-                    courtId: court.id,
-                    date: selectedDate,
-                  ));
-                },
-              );
-            },
-          ),
+            return _CourtCard(
+              court: court,
+              isSelected: isSelected,
+              onTap: () {
+                context.read<BookingBloc>().add(LoadAvailabilityEvent(
+                  courtId: court.id,
+                  date: selectedDate,
+                ));
+              },
+            );
+          },
         ),
       ],
     );
@@ -331,7 +365,6 @@ class _CourtCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 180,
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
@@ -355,66 +388,105 @@ class _CourtCard extends StatelessWidget {
                   )
                 ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Court Image
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-              child: Container(
-                height: 80,
-                width: double.infinity,
-                color: AppColors.border,
-                child: imageUrl != null && imageUrl.isNotEmpty
-                    ? Image.network(
-                        ApiConstants.getFullImageUrl(imageUrl),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _courtPlaceholder(),
-                      )
-                    : _courtPlaceholder(),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Court Image (Left side)
+              ClipRRect(
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
+                child: Container(
+                  width: 100,
+                  color: AppColors.border,
+                  child: imageUrl != null && imageUrl.isNotEmpty
+                      ? Image.network(
+                          ApiConstants.getFullImageUrl(imageUrl),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _courtPlaceholder(),
+                        )
+                      : _courtPlaceholder(),
+                ),
               ),
-            ),
-            // Court Info
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    court.courtName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
+              // Court Info (Right side)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              court.courtName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Đang hoạt động',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Đang hoạt động',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Distance Info
+                      BlocBuilder<ShopBloc, ShopState>(
+                        builder: (context, shopState) {
+                          if (shopState is ShopLoaded && shopState.distance != null) {
+                            return Row(
+                              children: [
+                                const Icon(Icons.location_on, color: Colors.red, size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${shopState.distance} km',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
