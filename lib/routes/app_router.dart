@@ -7,6 +7,10 @@ import '../presentation/pages/auth/otp_verify_page.dart';
 import '../presentation/pages/auth/home_screen.dart';
 import '../presentation/pages/user/profile_page.dart';
 import '../presentation/pages/admin/admin_users_page.dart';
+import '../presentation/pages/admin/admin_dashboard_page.dart';
+import '../presentation/pages/admin/admin_courts_page.dart';
+import '../presentation/pages/admin/admin_products_page.dart';
+import '../presentation/pages/admin/admin_shop_page.dart';
 import '../presentation/pages/store/product_list_page.dart';
 import '../presentation/pages/store/product_detail_page.dart';
 import '../presentation/pages/store/service_list_page.dart';
@@ -16,6 +20,8 @@ import '../presentation/pages/booking/booking_page.dart';
 import '../presentation/pages/booking/booking_history_page.dart';
 import '../presentation/pages/court/court_list_page.dart';
 import '../presentation/pages/court/court_detail_page.dart';
+import '../presentation/pages/error/not_found_page.dart';
+import '../presentation/pages/error/forbidden_page.dart';
 
 /// Tên các route trong app
 class AppRoutes {
@@ -27,6 +33,10 @@ class AppRoutes {
   static const String home     = '/home';
   static const String profile  = '/profile';
   static const String admin    = '/admin/users';
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminCourts = '/admin/courts';
+  static const String adminProducts = '/admin/products';
+  static const String adminShop = '/admin/shop';
   static const String storeList = '/store';
   static const String storeDetail = '/store/detail';
   static const String serviceList = '/store/services';
@@ -36,6 +46,8 @@ class AppRoutes {
   static const String bookingHistory = '/booking/history';
   static const String courtList = '/courts';
   static const String courtDetail = '/court-detail';
+  static const String notFound = '/404';
+  static const String forbidden = '/403';
 }
 
 /// Tham số truyền qua route
@@ -94,8 +106,41 @@ class AppRouter {
         if (args == null) return _slide(const LoginScreen());
         return _slide(ProfilePage(userId: args.userId));
 
+      // ── Admin Routes với Router Guard ──────────────────────────
+      case AppRoutes.adminDashboard:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminDashboardPage(user: user));
+
       case AppRoutes.admin:
-        return _slide(const AdminUsersPage());
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _slide(AdminUsersPage(user: user));
+
+      case AppRoutes.adminCourts:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminCourtsPage(user: user));
+
+      case AppRoutes.adminProducts:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminProductsPage(user: user));
+
+      case AppRoutes.adminShop:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminShopPage(user: user));
 
       case AppRoutes.storeList:
         return _slide(const ProductListPage());
@@ -131,9 +176,23 @@ class AppRouter {
         if (courtId == null) return _slide(const CourtListPage());
         return _slide(CourtDetailPage(courtId: courtId));
 
+      case AppRoutes.notFound:
+        return _slide(const NotFoundPage());
+
+      case AppRoutes.forbidden:
+        return _slide(const ForbiddenPage());
+
       default:
-        return _slide(const LoginScreen());
+        // Route không tồn tại -> hiển thị trang 404
+        return _slide(const NotFoundPage());
     }
+  }
+
+  /// Kiểm tra quyền truy cập Admin
+  /// Trả về true nếu user có quyền Admin
+  static bool checkAdminAccess(User? user) {
+    if (user == null) return false;
+    return user.role?.toLowerCase() == 'admin';
   }
 
   // Slide từ phải sang trái

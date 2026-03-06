@@ -5,6 +5,7 @@ import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_notification.dart';
+import '../../../routes/app_router.dart';
 import 'register_page.dart';
 import 'home_screen.dart';
 import 'otp_verify_page.dart';
@@ -49,11 +50,24 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state is AuthSuccess) {
             AppNotification.showSuccess('Đăng nhập thành công! Chào mừng bạn trở lại 👋', userId: state.user.id);
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => HomeScreen(user: state.user)),
-              (route) => false,
-            );
+            
+            // Redirect dựa vào role
+            if (AppRouter.checkAdminAccess(state.user)) {
+              // Admin -> Admin Dashboard
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.adminDashboard,
+                (route) => false,
+                arguments: state.user,
+              );
+            } else {
+              // User thường -> Home Screen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => HomeScreen(user: state.user)),
+                (route) => false,
+              );
+            }
           } else if (state is AuthOtpRequired) {
             AppNotification.showInfo('Vui lòng xác thực OTP để tiếp tục');
             Navigator.push(
