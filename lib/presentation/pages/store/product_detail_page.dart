@@ -22,9 +22,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(product.productName),
-        actions: const [
-          _CartBadge(count: 3),
-          SizedBox(width: 12),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            icon: const Icon(Icons.home_outlined),
+            tooltip: 'Về trang chủ',
+          ),
+          const _CartBadge(count: 3),
+          const SizedBox(width: 12),
         ],
       ),
       body: SafeArea(
