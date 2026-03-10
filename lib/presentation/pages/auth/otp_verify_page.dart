@@ -5,6 +5,7 @@ import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/app_notification.dart';
+import '../../../routes/app_router.dart';
 import 'login_page.dart';
 import 'home_screen.dart';
 
@@ -59,12 +60,24 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
           if (state is AuthSuccess) {
             if (widget.is2fa) {
               AppNotification.showSuccess('Xác thực thành công! Chào mừng 👋');
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => HomeScreen(user: state.user)),
-                (route) => false,
-              );
+              
+              // Redirect dựa vào role
+              if (AppRouter.checkAdminAccess(state.user)) {
+                // Admin -> Admin Dashboard
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.adminDashboard,
+                  (route) => false,
+                  arguments: state.user,
+                );
+              } else {
+                // User thường -> Home Screen
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => HomeScreen(user: state.user)),
+                  (route) => false,
+                );
+              }
             } else {
               context.read<AuthBloc>().add(const LogoutEvent());
               AppNotification.showSuccess(

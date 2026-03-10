@@ -244,7 +244,14 @@ class HomeScreen extends StatelessWidget {
                         _MenuListItem(
                           label: 'Quản lý hệ thống (Admin)',
                           icon: Icons.admin_panel_settings_outlined,
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.admin),
+                          onTap: () {
+                            // Kiểm tra quyền trước khi cho phép truy cập
+                            if (AppRouter.checkAdminAccess(currentUser)) {
+                              Navigator.pushNamed(context, AppRoutes.admin);
+                            } else {
+                              Navigator.pushNamed(context, AppRoutes.forbidden);
+                            }
+                          },
                         ),
                       ],
                       const SizedBox(height: 40),
