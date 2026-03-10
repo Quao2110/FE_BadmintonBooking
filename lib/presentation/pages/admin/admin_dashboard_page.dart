@@ -84,21 +84,33 @@ class AdminDashboardPage extends StatelessWidget {
                       title: 'Users',
                       value: '150',
                       color: Colors.blue,
-                      onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.admin),
+                      onTap: () => Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.admin,
+                        arguments: user,
+                      ),
                     ),
                     _StatCard(
                       icon: Icons.sports_tennis_rounded,
                       title: 'Sân',
                       value: '12',
                       color: Colors.green,
-                      onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.adminCourts),
+                      onTap: () => Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminCourts,
+                        arguments: user,
+                      ),
                     ),
                     _StatCard(
                       icon: Icons.shopping_bag_rounded,
                       title: 'Sản phẩm',
                       value: '45',
                       color: Colors.orange,
-                      onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.adminProducts),
+                      onTap: () => Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminProducts,
+                        arguments: user,
+                      ),
                     ),
                     _StatCard(
                       icon: Icons.calendar_today_rounded,
@@ -136,25 +148,41 @@ class AdminDashboardPage extends StatelessWidget {
                       icon: Icons.person_add_rounded,
                       label: 'Thêm User',
                       isMobile: isMobile,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.admin),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.admin,
+                        arguments: user,
+                      ),
                     ),
                     _QuickActionButton(
                       icon: Icons.add_business_rounded,
                       label: 'Thêm Sân',
                       isMobile: isMobile,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.adminCourts),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.adminCourts,
+                        arguments: user,
+                      ),
                     ),
                     _QuickActionButton(
                       icon: Icons.add_shopping_cart_rounded,
                       label: 'Thêm Sản phẩm',
                       isMobile: isMobile,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.adminProducts),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.adminProducts,
+                        arguments: user,
+                      ),
                     ),
                     _QuickActionButton(
                       icon: Icons.settings_rounded,
                       label: 'Cài đặt Shop',
                       isMobile: isMobile,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.adminShop),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.adminShop,
+                        arguments: user,
+                      ),
                     ),
                   ],
                 );
@@ -272,7 +300,9 @@ class _QuickActionButton extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: isMobile ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisAlignment: isMobile
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             children: [
               Icon(icon, color: AppColors.primary, size: 22),
               const SizedBox(width: 12),
