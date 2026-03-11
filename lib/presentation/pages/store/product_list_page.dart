@@ -79,6 +79,15 @@ class _ProductListPageState extends State<ProductListPage> {
             ),
           ),
           actions: [
+            IconButton(
+              onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.storeList,
+                (route) => false,
+              ),
+              icon: const Icon(Icons.home_outlined),
+              tooltip: 'Về trang chủ',
+            ),
             _CartIcon(count: _cartCount, onTap: () {}),
             const SizedBox(width: 12),
           ],
