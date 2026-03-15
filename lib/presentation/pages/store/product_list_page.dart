@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/colors.dart';
+import '../../../data/datasources/commerce_api_service.dart';
 import '../../../routes/app_router.dart';
 import '../../../data/models/product/product_list_query.dart';
-import '../../../domain/entities/category_entity.dart';
 import '../../../domain/entities/product_entity.dart';
+import '../../../shared/widgets/app_notification.dart';
 import '../../bloc/category/category_bloc.dart';
 import '../../bloc/category/category_event.dart';
 import '../../bloc/category/category_state.dart';
@@ -20,7 +21,7 @@ class ProductListPage extends StatefulWidget {
 }
 
 class _ProductListPageState extends State<ProductListPage> {
-  int _cartCount = 3;
+  int _cartCount = 0;
   int _selectedCategoryIndex = 0;
   String? _selectedCategoryId;
   String _search = '';
@@ -32,6 +33,7 @@ class _ProductListPageState extends State<ProductListPage> {
   final TextEditingController _maxPriceController = TextEditingController();
   late final CategoryBloc _categoryBloc;
   late final ProductBloc _productBloc;
+  final CommerceApiService _commerce = CommerceApiService();
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _ProductListPageState extends State<ProductListPage> {
     _productBloc = ProductBloc.create();
     _categoryBloc.add(const GetAllCategoriesEvent());
     _fetchProducts();
+    _refreshCartCount();
   }
 
   @override
@@ -66,6 +69,21 @@ class _ProductListPageState extends State<ProductListPage> {
             Navigator.pop(context);
             Navigator.pushNamed(context, AppRoutes.serviceList);
           },
+          onCart: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(
+              context,
+              AppRoutes.cart,
+            ).then((_) => _refreshCartCount());
+          },
+          onOrders: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.orderHistory);
+          },
+          onSupport: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.supportInbox);
+          },
         ),
         appBar: AppBar(
           backgroundColor: AppColors.primary,
@@ -88,7 +106,15 @@ class _ProductListPageState extends State<ProductListPage> {
               icon: const Icon(Icons.home_outlined),
               tooltip: 'Về trang chủ',
             ),
-            _CartIcon(count: _cartCount, onTap: () {}),
+            _CartIcon(
+              count: _cartCount,
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.cart,
+                ).then((_) => _refreshCartCount());
+              },
+            ),
             const SizedBox(width: 12),
           ],
         ),
@@ -108,11 +134,17 @@ class _ProductListPageState extends State<ProductListPage> {
               BlocBuilder<CategoryBloc, CategoryState>(
                 builder: (context, state) {
                   if (state is CategoryLoading) {
-                    return const SizedBox(height: 38, child: Center(child: CircularProgressIndicator()));
+                    return const SizedBox(
+                      height: 38,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
                   }
                   if (state is CategoryListLoaded) {
                     final categories = state.categories;
-                    final labels = ['All', ...categories.map((e) => e.categoryName)];
+                    final labels = [
+                      'All',
+                      ...categories.map((e) => e.categoryName),
+                    ];
                     return _CategoryRow(
                       categories: labels,
                       selectedIndex: _selectedCategoryIndex,
@@ -132,7 +164,8 @@ class _ProductListPageState extends State<ProductListPage> {
                   if (state is CategoryError) {
                     return _InlineError(
                       message: state.message,
-                      onRetry: () => _categoryBloc.add(const GetAllCategoriesEvent()),
+                      onRetry: () =>
+                          _categoryBloc.add(const GetAllCategoriesEvent()),
                     );
                   }
                   return const SizedBox(height: 38);
@@ -151,26 +184,20 @@ class _ProductListPageState extends State<ProductListPage> {
                         return const Center(child: Text('Không có sản phẩm'));
                       }
                       return GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.72,
+                            ),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = items[index];
                           return _ProductCard(
                             item: item,
                             onAdd: () {
-                              setState(() => _cartCount += 1);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Added to cart successfully!'),
-                                  behavior: SnackBarBehavior.floating,
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
+                              _addToCart(item);
                             },
                             onTap: () {
                               Navigator.pushNamed(
@@ -213,6 +240,27 @@ class _ProductListPageState extends State<ProductListPage> {
     _productBloc.add(GetProductsEvent(query));
   }
 
+  Future<void> _refreshCartCount() async {
+    try {
+      final cart = await _commerce.getCart();
+      if (!mounted) return;
+      setState(() => _cartCount = cart.itemCount);
+    } catch (_) {
+      // Ignore cart badge failures on store list
+    }
+  }
+
+  Future<void> _addToCart(ProductEntity item) async {
+    try {
+      await _commerce.addToCart(productId: item.id, quantity: 1);
+      if (!mounted) return;
+      AppNotification.showSuccess('Added ${item.productName} to cart.');
+      _refreshCartCount();
+    } catch (e) {
+      AppNotification.showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   void _showFilterSheet(BuildContext context) {
     _minPriceController.text = _minPrice?.toStringAsFixed(0) ?? '';
     _maxPriceController.text = _maxPrice?.toStringAsFixed(0) ?? '';
@@ -236,7 +284,10 @@ class _ProductListPageState extends State<ProductListPage> {
               children: [
                 const Text('Filters', style: TextStyle(fontSize: 18)),
                 const SizedBox(height: 12),
-                const Text('Giá', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Giá',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -244,9 +295,7 @@ class _ProductListPageState extends State<ProductListPage> {
                       child: TextField(
                         controller: _minPriceController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          hintText: 'Từ (₫)',
-                        ),
+                        decoration: const InputDecoration(hintText: 'Từ (₫)'),
                         onChanged: (v) => tempMin = _parseDouble(v),
                       ),
                     ),
@@ -255,16 +304,17 @@ class _ProductListPageState extends State<ProductListPage> {
                       child: TextField(
                         controller: _maxPriceController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          hintText: 'Đến (₫)',
-                        ),
+                        decoration: const InputDecoration(hintText: 'Đến (₫)'),
                         onChanged: (v) => tempMax = _parseDouble(v),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text('Sắp xếp', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Sắp xếp',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 6),
                 _SortOption(
                   label: 'Giá tăng dần',
@@ -406,7 +456,9 @@ class _CategoryRow extends StatelessWidget {
               child: Text(
                 categories[index],
                 style: TextStyle(
-                  color: selected ? AppColors.background : AppColors.textPrimary,
+                  color: selected
+                      ? AppColors.background
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -447,7 +499,11 @@ class _ProductCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: const Icon(Icons.shopping_bag, size: 54, color: AppColors.accent),
+                  child: const Icon(
+                    Icons.shopping_bag,
+                    size: 54,
+                    color: AppColors.accent,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -455,16 +511,25 @@ class _ProductCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 item.categoryName ?? '',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Text('₫${_formatCurrency(item.price)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    '₫${_formatCurrency(item.price)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const Spacer(),
                   IconButton(
                     onPressed: onAdd,
-                    icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                    icon: const Icon(
+                      Icons.add_circle,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ],
               ),
@@ -544,9 +609,15 @@ class _SortOption extends StatelessWidget {
 class _StoreDrawer extends StatelessWidget {
   final VoidCallback onProducts;
   final VoidCallback onServices;
+  final VoidCallback? onCart;
+  final VoidCallback? onOrders;
+  final VoidCallback? onSupport;
   const _StoreDrawer({
     required this.onProducts,
     required this.onServices,
+    this.onCart,
+    this.onOrders,
+    this.onSupport,
   });
 
   @override
@@ -580,6 +651,30 @@ class _StoreDrawer extends StatelessWidget {
             title: const Text('Dịch vụ'),
             onTap: onServices,
           ),
+          ListTile(
+            leading: const Icon(
+              Icons.shopping_cart_outlined,
+              color: AppColors.textPrimary,
+            ),
+            title: const Text('Gio hang'),
+            onTap: onCart,
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.receipt_long_outlined,
+              color: AppColors.textPrimary,
+            ),
+            title: const Text('Lich su don hang'),
+            onTap: onOrders,
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.support_agent_outlined,
+              color: AppColors.textPrimary,
+            ),
+            title: const Text('Ho tro'),
+            onTap: onSupport,
+          ),
         ],
       ),
     );
@@ -595,7 +690,12 @@ class _InlineError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(message, style: const TextStyle(color: AppColors.textSecondary))),
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
         TextButton(onPressed: onRetry, child: const Text('Thử lại')),
       ],
     );
