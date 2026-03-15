@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         title: 'Badminton App',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.storeList,
+        initialRoute: AppRoutes.login,
         onGenerateRoute: AppRouter.generateRoute,
         builder: (context, child) => _PermissionRequester(child: child!),
       ),
