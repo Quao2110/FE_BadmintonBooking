@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextFormField(
                                 controller: _emailCtrl,
                                 keyboardType: TextInputType.emailAddress,
-                                validator: Validators.email,
+                            //    validator: Validators.email,
                                 decoration: InputDecoration(
                                   labelText: 'Email',
                                   prefixIcon:
