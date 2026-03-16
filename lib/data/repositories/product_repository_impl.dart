@@ -1,4 +1,5 @@
 import '../datasources/product_api_service.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/product/product_response_model.dart';
 import '../models/product/product_image_response_model.dart';
 import '../models/product/product_list_query.dart';
@@ -11,7 +12,7 @@ import '../../domain/repositories/i_product_repository.dart';
 class ProductRepository implements IProductRepository {
   final ProductRemoteDataSource _dataSource;
   ProductRepository({ProductRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? ProductRemoteDataSource();
+    : _dataSource = dataSource ?? ProductRemoteDataSource();
 
   @override
   Future<List<ProductEntity>> getAll(ProductListQuery query) async {
@@ -50,12 +51,49 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
+  Future<void> uploadImage(
+    String productId,
+    XFile imageFile, {
+    bool isThumbnail = false,
+  }) async {
+    final res = await _dataSource.uploadImage(
+      productId: productId,
+      imageFile: imageFile,
+      isThumbnail: true,
+    );
+    if (!res.isSuccess) throw Exception(res.message);
+  }
+
+  @override
   Future<void> delete(String id) async {
     final res = await _dataSource.delete(id);
     if (!res.isSuccess) throw Exception(res.message);
   }
 
   ProductEntity _mapToEntity(ProductResponseModel m) {
+    final mappedImages = m.productImages.map(_mapImageToEntity).toList();
+
+    ProductImageEntity? newestThumbnail;
+    ProductImageEntity? newestImage;
+    DateTime? newestThumbnailAt;
+    DateTime? newestImageAt;
+
+    for (final image in mappedImages) {
+      if (image.imageUrl.trim().isEmpty) continue;
+      final createdAt = DateTime.tryParse(image.createdAt ?? '');
+
+      if (newestImage == null || _isNewer(createdAt, newestImageAt)) {
+        newestImage = image;
+        newestImageAt = createdAt;
+      }
+
+      if (image.isThumbnail &&
+          (newestThumbnail == null || _isNewer(createdAt, newestThumbnailAt))) {
+        newestThumbnail = image;
+        newestThumbnailAt = createdAt;
+      }
+    }
+
     return ProductEntity(
       id: m.id,
       categoryId: m.categoryId,
@@ -63,11 +101,20 @@ class ProductRepository implements IProductRepository {
       productName: m.productName,
       description: m.description,
       price: m.price,
-      imageUrl: m.imageUrl,
+      imageUrl: (m.imageUrl != null && m.imageUrl!.isNotEmpty)
+          ? m.imageUrl
+          : (newestThumbnail?.imageUrl ?? newestImage?.imageUrl),
       stockQuantity: m.stockQuantity,
       isActive: m.isActive,
-      productImages: m.productImages.map(_mapImageToEntity).toList(),
+      productImages: mappedImages,
     );
+  }
+
+  bool _isNewer(DateTime? a, DateTime? b) {
+    if (a == null && b == null) return true;
+    if (a != null && b == null) return true;
+    if (a == null && b != null) return false;
+    return a!.isAfter(b!);
   }
 
   ProductImageEntity _mapImageToEntity(ProductImageResponseModel m) {

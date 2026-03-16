@@ -42,6 +42,8 @@ class ApiConstants {
   // Product endpoints
   static const String products = '/api/products';
   static String productById(String id) => '/api/products/$id';
+  static const String productImages = '/api/product-images';
+  static String productImageById(String id) => '/api/product-images/$id';
 
   // Service endpoints
   static const String services = '/api/services';
@@ -49,15 +51,20 @@ class ApiConstants {
 
   // Notification endpoints
   static const String notifications = '/api/Notifications';
-  static String notificationsByUserId(String userId) => '/api/Notifications/user/$userId';
-  static String notificationMarkAsRead(String id) => '/api/Notifications/mark-as-read/$id';
+  static String notificationsByUserId(String userId) =>
+      '/api/Notifications/user/$userId';
+  static String notificationMarkAsRead(String id) =>
+      '/api/Notifications/mark-as-read/$id';
 
   // Court endpoints
   static const String courts = '/api/courts';
   static String courtById(String id) => '/api/courts/$id';
+  static const String courtImages = '/api/courts/images';
+  static String courtImageById(String id) => '/api/courts/images/$id';
 
   // Shop endpoints
   static const String shops = '/api/Shops';
+  static const String shopsAll = '/api/Shops/all';
   static String shopById(String id) => '/api/Shops/$id';
   static const String shopDistance = '/api/Shops/distance';
 
@@ -70,8 +77,12 @@ class ApiConstants {
 
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';
-    if (relativePath.startsWith('http')) return relativePath;
-    return '${baseUrl}$relativePath';
+    final normalized = relativePath.trim().replaceAll('\\', '/');
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      return normalized;
+    }
+    final path = normalized.startsWith('/') ? normalized : '/$normalized';
+    return '${baseUrl}$path';
   }
 
   // Timeout (milliseconds)

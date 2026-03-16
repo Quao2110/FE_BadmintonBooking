@@ -13,7 +13,12 @@ class CourtEntity {
     required this.courtImages,
   });
 
-  String? get primaryImageUrl => courtImages.isNotEmpty ? courtImages.first.imageUrl : null;
+  String? get primaryImageUrl {
+    for (final image in courtImages) {
+      if (image.imageUrl.trim().isNotEmpty) return image.imageUrl;
+    }
+    return null;
+  }
 }
 
 class CourtImageEntity {

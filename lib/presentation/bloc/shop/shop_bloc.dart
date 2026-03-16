@@ -11,21 +11,23 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
   ShopBloc({required this.repository}) : super(const ShopInitial()) {
     on<LoadShopInfo>(_onLoadShopInfo);
     on<CalculateDistance>(_onCalculateDistance);
+    on<UpdateShopEvent>(_onUpdateShop);
   }
 
   factory ShopBloc.create() {
     return ShopBloc(
-      repository: ShopRepositoryImpl(
-        remoteDataSource: ShopRemoteDataSource(),
-      ),
+      repository: ShopRepositoryImpl(remoteDataSource: ShopRemoteDataSource()),
     );
   }
 
-  Future<void> _onLoadShopInfo(LoadShopInfo event, Emitter<ShopState> emit) async {
+  Future<void> _onLoadShopInfo(
+    LoadShopInfo event,
+    Emitter<ShopState> emit,
+  ) async {
     final currentState = state;
     double? lat;
     double? lng;
-    
+
     if (currentState is ShopInitial) {
       lat = currentState.userLat;
       lng = currentState.userLng;
@@ -41,22 +43,32 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
       if (lat != null && lng != null) {
         distance = await repository.calculateDistance(lat, lng);
       }
-      emit(ShopLoaded(shop: shop, userLat: lat, userLng: lng, distance: distance));
+      emit(
+        ShopLoaded(shop: shop, userLat: lat, userLng: lng, distance: distance),
+      );
     } catch (e) {
       emit(ShopError(message: e.toString()));
     }
   }
 
-  Future<void> _onCalculateDistance(CalculateDistance event, Emitter<ShopState> emit) async {
+  Future<void> _onCalculateDistance(
+    CalculateDistance event,
+    Emitter<ShopState> emit,
+  ) async {
     final currentState = state;
     if (currentState is ShopLoaded) {
       try {
-        final distance = await repository.calculateDistance(event.userLat, event.userLng);
-        emit(currentState.copyWith(
-          distance: distance,
-          userLat: event.userLat,
-          userLng: event.userLng,
-        ));
+        final distance = await repository.calculateDistance(
+          event.userLat,
+          event.userLng,
+        );
+        emit(
+          currentState.copyWith(
+            distance: distance,
+            userLat: event.userLat,
+            userLng: event.userLng,
+          ),
+        );
       } catch (e) {
         // Ignore errors for distance
       }
@@ -64,6 +76,27 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
       emit(ShopInitial(userLat: event.userLat, userLng: event.userLng));
     } else if (currentState is ShopLoading) {
       emit(ShopLoading(userLat: event.userLat, userLng: event.userLng));
+    }
+  }
+
+  Future<void> _onUpdateShop(
+    UpdateShopEvent event,
+    Emitter<ShopState> emit,
+  ) async {
+    emit(const ShopUpdating());
+    try {
+      final updatedShop = await repository.updateShop(
+        event.shopId,
+        event.request,
+      );
+      emit(
+        ShopUpdateSuccess(
+          shop: updatedShop,
+          message: 'Cập nhật shop thành công',
+        ),
+      );
+    } catch (e) {
+      emit(ShopError(message: e.toString()));
     }
   }
 }

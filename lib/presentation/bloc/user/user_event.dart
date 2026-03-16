@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../domain/entities/user_entity.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../data/models/user/update_user_request.dart';
 import '../../../data/models/user/change_password_request.dart';
 
@@ -41,4 +41,14 @@ class DeleteUserEvent extends UserEvent {
   const DeleteUserEvent(this.id);
   @override
   List<Object?> get props => [id];
+}
+
+class UploadUserAvatarEvent extends UserEvent {
+  final String id;
+  final XFile imageFile;
+
+  const UploadUserAvatarEvent({required this.id, required this.imageFile});
+
+  @override
+  List<Object?> get props => [id, imageFile.path];
 }

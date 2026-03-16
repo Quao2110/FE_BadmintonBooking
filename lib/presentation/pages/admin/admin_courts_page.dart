@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../domain/entities/user.dart';
 import '../../../domain/entities/court_entity.dart';
 import '../../../core/theme/colors.dart';
@@ -43,7 +48,19 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CourtBloc, CourtState>(
+    return BlocConsumer<CourtBloc, CourtState>(
+      listener: (context, state) {
+        if (state is CourtActionSuccess) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+          context.read<CourtBloc>().add(const LoadAllCourts());
+        } else if (state is CourtError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
       builder: (context, state) {
         List<CourtEntity> courts = [];
         if (state is CourtListLoaded) {
@@ -201,7 +218,13 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
                     // Mobile: Card layout
                     Column(
                       children: displayedCourts
-                          .map((court) => _CourtCard(court: court))
+                          .map(
+                            (court) => _CourtCard(
+                              court: court,
+                              onUploadImage: () =>
+                                  _showUploadImageDialog(context, court),
+                            ),
+                          )
                           .toList(),
                     )
                   else
@@ -244,16 +267,12 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
                                             ? ClipRRect(
                                                 borderRadius:
                                                     BorderRadius.circular(8),
-                                                child: Image.network(
-                                                  ApiConstants.getFullImageUrl(
-                                                    court.primaryImageUrl!,
-                                                  ),
+                                                child: _SmartCourtImage(
+                                                  imageUrl:
+                                                      court.primaryImageUrl,
+                                                  fallbackIcon:
+                                                      Icons.sports_tennis,
                                                   fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) =>
-                                                      const Icon(
-                                                        Icons.sports_tennis,
-                                                        color: Colors.grey,
-                                                      ),
                                                 ),
                                               )
                                             : const Icon(
@@ -285,6 +304,20 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons
+                                                  .add_photo_alternate_outlined,
+                                              size: 20,
+                                            ),
+                                            color: Colors.teal,
+                                            tooltip: 'Thêm ảnh',
+                                            onPressed: () =>
+                                                _showUploadImageDialog(
+                                                  context,
+                                                  court,
+                                                ),
+                                          ),
                                           IconButton(
                                             icon: const Icon(
                                               Icons.visibility_outlined,
@@ -443,6 +476,16 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
       },
     );
   }
+
+  void _showUploadImageDialog(BuildContext context, CourtEntity court) {
+    showDialog(
+      context: context,
+      builder: (_) => BlocProvider.value(
+        value: context.read<CourtBloc>(),
+        child: _UploadCourtImageDialog(court: court),
+      ),
+    );
+  }
 }
 
 class _StatChip extends StatelessWidget {
@@ -492,8 +535,9 @@ class _StatChip extends StatelessWidget {
 
 class _CourtCard extends StatelessWidget {
   final CourtEntity court;
+  final VoidCallback onUploadImage;
 
-  const _CourtCard({required this.court});
+  const _CourtCard({required this.court, required this.onUploadImage});
 
   @override
   Widget build(BuildContext context) {
@@ -520,16 +564,10 @@ class _CourtCard extends StatelessWidget {
                   child: court.primaryImageUrl != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            ApiConstants.getFullImageUrl(
-                              court.primaryImageUrl!,
-                            ),
+                          child: _SmartCourtImage(
+                            imageUrl: court.primaryImageUrl,
+                            fallbackIcon: Icons.sports_tennis,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.sports_tennis,
-                              color: Colors.grey,
-                              size: 40,
-                            ),
                           ),
                         )
                       : const Icon(
@@ -574,6 +612,15 @@ class _CourtCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton.icon(
+                  onPressed: onUploadImage,
+                  icon: const Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 18,
+                  ),
+                  label: const Text('Thêm ảnh'),
+                  style: TextButton.styleFrom(foregroundColor: Colors.teal),
+                ),
+                TextButton.icon(
                   onPressed: () {
                     Navigator.pushNamed(
                       context,
@@ -590,6 +637,208 @@ class _CourtCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SmartCourtImage extends StatelessWidget {
+  final String? imageUrl;
+  final IconData fallbackIcon;
+  final BoxFit fit;
+
+  const _SmartCourtImage({
+    required this.imageUrl,
+    required this.fallbackIcon,
+    this.fit = BoxFit.cover,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final raw = imageUrl?.trim();
+    if (raw == null || raw.isEmpty) {
+      return Icon(fallbackIcon, color: Colors.grey);
+    }
+
+    if (raw.startsWith('data:image')) {
+      try {
+        final uriData = UriData.parse(raw);
+        final bytes = uriData.contentAsBytes();
+        return Image.memory(
+          bytes,
+          fit: fit,
+          errorBuilder: (_, __, ___) => Icon(fallbackIcon, color: Colors.grey),
+        );
+      } catch (_) {
+        final commaIndex = raw.indexOf(',');
+        if (commaIndex > 0 && commaIndex < raw.length - 1) {
+          try {
+            var encoded = raw.substring(commaIndex + 1).replaceAll(RegExp(r'\s+'), '');
+            final mod = encoded.length % 4;
+            if (mod != 0) {
+              encoded = '$encoded${'=' * (4 - mod)}';
+            }
+            final bytes = base64Decode(encoded);
+            return Image.memory(
+              bytes,
+              fit: fit,
+              errorBuilder: (_, __, ___) => Icon(fallbackIcon, color: Colors.grey),
+            );
+          } catch (_) {
+            return Icon(fallbackIcon, color: Colors.grey);
+          }
+        }
+        return Icon(fallbackIcon, color: Colors.grey);
+      }
+    }
+
+    return Image.network(
+      ApiConstants.getFullImageUrl(raw),
+      fit: fit,
+      errorBuilder: (_, __, ___) => Icon(fallbackIcon, color: Colors.grey),
+    );
+  }
+}
+
+class _UploadCourtImageDialog extends StatefulWidget {
+  final CourtEntity court;
+  const _UploadCourtImageDialog({required this.court});
+
+  @override
+  State<_UploadCourtImageDialog> createState() =>
+      _UploadCourtImageDialogState();
+}
+
+class _UploadCourtImageDialogState extends State<_UploadCourtImageDialog> {
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedImage;
+
+  Future<void> _pickImage() async {
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 92,
+      );
+      if (file != null && mounted) {
+        setState(() => _selectedImage = file);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể chọn ảnh: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _submit() {
+    if (_selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ảnh trước khi tải lên')),
+      );
+      return;
+    }
+
+    context.read<CourtBloc>().add(
+      UploadCourtImage(courtId: widget.court.id, imageFile: _selectedImage!),
+    );
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Tải ảnh sân'),
+      content: SizedBox(
+        width: 500,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Sân: ${widget.court.courtName}'),
+            const SizedBox(height: 4),
+            SelectableText(
+              'ID: ${widget.court.id}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 220,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.grey.shade50,
+                ),
+                child: _selectedImage == null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 48,
+                            color: Colors.grey.shade500,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Chọn ảnh để xem trước'),
+                        ],
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: kIsWeb
+                            ? Image.network(
+                                _selectedImage!.path,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(_selectedImage!.path),
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: const Text('Chọn file'),
+                ),
+                const SizedBox(width: 12),
+                if (_selectedImage != null)
+                  Expanded(
+                    child: Text(
+                      _selectedImage!.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy'),
+        ),
+        ElevatedButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.upload),
+          label: const Text('Tải lên'),
+        ),
+      ],
     );
   }
 }
