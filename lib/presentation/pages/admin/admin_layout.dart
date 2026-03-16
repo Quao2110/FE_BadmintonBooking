@@ -307,6 +307,48 @@ class _AdminLayoutState extends State<AdminLayout> {
                     );
                   },
                 ),
+                _MenuItem(
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Đặt sân',
+                  route: AppRoutes.adminBookings,
+                  currentRoute: widget.currentRoute,
+                  isExpanded: isExpanded,
+                  onTap: () {
+                    Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.adminBookings,
+                      arguments: widget.user,
+                    );
+                  },
+                ),
+                _MenuItem(
+                  icon: Icons.local_shipping_rounded,
+                  label: 'Đơn hàng',
+                  route: AppRoutes.adminOrders,
+                  currentRoute: widget.currentRoute,
+                  isExpanded: isExpanded,
+                  onTap: () {
+                    Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.adminOrders,
+                      arguments: widget.user,
+                    );
+                  },
+                ),
+                _MenuItem(
+                  icon: Icons.inbox_rounded,
+                  label: 'Hộp thư',
+                  route: AppRoutes.adminInbox,
+                  currentRoute: widget.currentRoute,
+                  isExpanded: isExpanded,
+                  onTap: () {
+                    Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.adminInbox,
+                      arguments: widget.user,
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -462,6 +504,12 @@ class _AdminLayoutState extends State<AdminLayout> {
         return 'Sản phẩm';
       case AppRoutes.adminShop:
         return 'Shop';
+      case AppRoutes.adminBookings:
+        return 'Quản lý Đặt sân';
+      case AppRoutes.adminOrders:
+        return 'Quản lý Đơn hàng';
+      case AppRoutes.adminInbox:
+        return 'Hộp thư CSKH';
       default:
         return 'Admin';
     }

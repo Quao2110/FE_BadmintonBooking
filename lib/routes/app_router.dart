@@ -12,6 +12,9 @@ import '../presentation/pages/admin/admin_dashboard_page.dart';
 import '../presentation/pages/admin/admin_courts_page.dart';
 import '../presentation/pages/admin/admin_products_page.dart';
 import '../presentation/pages/admin/admin_shop_page.dart';
+import '../presentation/pages/admin/admin_bookings_page.dart';
+import '../presentation/pages/admin/admin_orders_page.dart';
+import '../presentation/pages/admin/admin_inbox_page.dart';
 import '../presentation/pages/store/product_list_page.dart';
 import '../presentation/pages/store/product_detail_page.dart';
 import '../presentation/pages/store/service_list_page.dart';
@@ -42,6 +45,9 @@ class AppRoutes {
   static const String adminCourts = '/admin/courts';
   static const String adminProducts = '/admin/products';
   static const String adminShop = '/admin/shop';
+  static const String adminBookings = '/admin/bookings';
+  static const String adminOrders = '/admin/orders';
+  static const String adminInbox = '/admin/inbox';
   static const String storeList = '/store';
   static const String storeDetail = '/store/detail';
   static const String serviceList = '/store/services';
@@ -154,6 +160,27 @@ class AppRouter {
           return _slide(const ForbiddenPage());
         }
         return _fade(AdminShopPage(user: user));
+
+      case AppRoutes.adminBookings:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminBookingsPage(user: user));
+
+      case AppRoutes.adminOrders:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminOrdersPage(user: user));
+
+      case AppRoutes.adminInbox:
+        final user = settings.arguments as User?;
+        if (user == null || !checkAdminAccess(user)) {
+          return _slide(const ForbiddenPage());
+        }
+        return _fade(AdminInboxPage(user: user));
 
       case AppRoutes.storeList:
         return _slide(const ProductListPage());

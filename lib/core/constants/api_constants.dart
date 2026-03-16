@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 /// API URLs and endpoints
@@ -69,6 +69,18 @@ class ApiConstants {
   static const String bookingMyHistory = '/api/bookings/my-history';
   static String bookingById(String id) => '/api/bookings/$id';
   static String bookingCancel(String id) => '/api/bookings/$id/cancel';
+  static String bookingUpdateStatus(String id) => '/api/bookings/$id/status';
+
+  // Inbox endpoints (User)
+  static const String inboxMessages = '/api/inbox/messages';
+
+  // Admin Inbox endpoints
+  static const String adminInboxRooms = '/api/admin/inbox/rooms';
+  static const String adminInboxReply = '/api/admin/inbox/reply';
+
+  // Dashboard endpoints
+  static const String dashboardBookingRevenue = '/api/dashboard/bookings/revenue';
+  static const String dashboardOrderRevenue = '/api/dashboard/orders/revenue';
 
   // Cart endpoints
   static const String cart = '/api/cart';
