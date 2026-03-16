@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
+import '../../../data/datasources/commerce_api_service.dart';
 import '../../../domain/entities/product_entity.dart';
+import '../../../routes/app_router.dart';
+import '../../../shared/widgets/app_notification.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final ProductEntity product;
@@ -12,6 +15,15 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int _qty = 1;
+  int _cartCount = 0;
+  bool _isAdding = false;
+  final CommerceApiService _commerce = CommerceApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshCartCount();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +36,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         title: Text(product.productName),
         actions: [
           IconButton(
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () =>
+                Navigator.popUntil(context, (route) => route.isFirst),
             icon: const Icon(Icons.home_outlined),
             tooltip: 'Về trang chủ',
           ),
-          const _CartBadge(count: 3),
+          _CartBadge(
+            count: _cartCount,
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.cart,
+            ).then((_) => _refreshCartCount()),
+          ),
           const SizedBox(width: 12),
         ],
       ),
@@ -43,7 +62,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   children: [
                     _ImageCard(imageUrl: imageUrl),
                     const SizedBox(height: 12),
-                    Text(product.productName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                    Text(
+                      product.productName,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       product.categoryName ?? 'Cầu lông',
@@ -52,17 +77,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     const SizedBox(height: 8),
                     _SectionCard(
                       child: Text(
-                        (desc != null && desc.isNotEmpty) ? desc : 'Chưa có mô tả sản phẩm.',
-                        style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+                        (desc != null && desc.isNotEmpty)
+                            ? desc
+                            : 'Chưa có mô tả sản phẩm.',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
                     _SectionCard(
                       child: Column(
                         children: [
-                          _InfoRow(label: 'Giá', value: '₫${_formatCurrency(product.price)}'),
+                          _InfoRow(
+                            label: 'Giá',
+                            value: '₫${_formatCurrency(product.price)}',
+                          ),
                           const SizedBox(height: 8),
-                          _InfoRow(label: 'Tồn kho', value: '${product.stockQuantity}'),
+                          _InfoRow(
+                            label: 'Tồn kho',
+                            value: '${product.stockQuantity}',
+                          ),
                         ],
                       ),
                     ),
@@ -71,7 +107,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       child: Row(
                         children: [
                           const Expanded(
-                            child: Text('Số lượng', style: TextStyle(fontWeight: FontWeight.w600)),
+                            child: Text(
+                              'Số lượng',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
                           ),
                           _QtySelector(
                             value: _qty,
@@ -98,21 +137,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: AppColors.background,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        onPressed: isInStock
-                            ? () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Đã thêm vào giỏ hàng!'),
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            : null,
-                        child: Text(isInStock ? 'Thêm vào giỏ' : 'Hết hàng'),
+                        onPressed: isInStock && !_isAdding ? _addToCart : null,
+                        child: _isAdding
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(isInStock ? 'Thêm vào giỏ' : 'Hết hàng'),
                       ),
                     ),
                   ],
@@ -124,17 +164,39 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       ),
     );
   }
+
+  Future<void> _refreshCartCount() async {
+    try {
+      final cart = await _commerce.getCart();
+      if (!mounted) return;
+      setState(() => _cartCount = cart.itemCount);
+    } catch (_) {
+      // Keep badge silent if cart api is unavailable.
+    }
+  }
+
+  Future<void> _addToCart() async {
+    setState(() => _isAdding = true);
+    try {
+      await _commerce.addToCart(productId: widget.product.id, quantity: _qty);
+      await _refreshCartCount();
+      AppNotification.showSuccess('Added to cart successfully.');
+    } catch (e) {
+      AppNotification.showError(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isAdding = false);
+    }
+  }
 }
 
 class _ImageCard extends StatelessWidget {
   final String? imageUrl;
-  final double height;
-  const _ImageCard({this.imageUrl, this.height = 260});
+  const _ImageCard({this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height,
+      height: 260,
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -151,8 +213,11 @@ class _ImageCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.shopping_bag, size: 90, color: AppColors.accent),
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.shopping_bag,
+                    size: 90,
+                    color: AppColors.accent,
+                  ),
                 ),
               ),
       ),
@@ -240,14 +305,18 @@ class _QtyButton extends StatelessWidget {
 
 class _CartBadge extends StatelessWidget {
   final int count;
-  const _CartBadge({required this.count});
+  final VoidCallback onTap;
+  const _CartBadge({required this.count, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        IconButton(onPressed: () {}, icon: const Icon(Icons.shopping_cart_outlined)),
+        IconButton(
+          onPressed: onTap,
+          icon: const Icon(Icons.shopping_cart_outlined),
+        ),
         if (count > 0)
           Positioned(
             right: 6,

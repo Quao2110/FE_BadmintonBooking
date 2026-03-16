@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../domain/entities/user.dart';
 import '../domain/entities/product_entity.dart';
+import '../data/models/commerce/cart_model.dart';
 import '../presentation/pages/auth/login_page.dart';
 import '../presentation/pages/auth/register_page.dart';
 import '../presentation/pages/auth/otp_verify_page.dart';
@@ -23,6 +24,10 @@ import '../presentation/pages/booking/booking_page.dart';
 import '../presentation/pages/booking/booking_history_page.dart';
 import '../presentation/pages/court/court_list_page.dart';
 import '../presentation/pages/court/court_detail_page.dart';
+import '../presentation/pages/commerce/cart_page.dart';
+import '../presentation/pages/commerce/checkout_page.dart';
+import '../presentation/pages/commerce/order_history_page.dart';
+import '../presentation/pages/support/support_inbox_page.dart';
 import '../presentation/pages/error/not_found_page.dart';
 import '../presentation/pages/error/forbidden_page.dart';
 
@@ -30,12 +35,12 @@ import '../presentation/pages/error/forbidden_page.dart';
 class AppRoutes {
   AppRoutes._();
 
-  static const String login    = '/login';
+  static const String login = '/login';
   static const String register = '/register';
   static const String otpVerify = '/otp-verify';
-  static const String home     = '/home';
-  static const String profile  = '/profile';
-  static const String admin    = '/admin/users';
+  static const String home = '/home';
+  static const String profile = '/profile';
+  static const String admin = '/admin/users';
   static const String adminDashboard = '/admin/dashboard';
   static const String adminCourts = '/admin/courts';
   static const String adminProducts = '/admin/products';
@@ -52,6 +57,10 @@ class AppRoutes {
   static const String bookingHistory = '/booking/history';
   static const String courtList = '/courts';
   static const String courtDetail = '/court-detail';
+  static const String cart = '/cart';
+  static const String checkout = '/checkout';
+  static const String orderHistory = '/orders/history';
+  static const String supportInbox = '/support/inbox';
   static const String notFound = '/404';
   static const String forbidden = '/403';
 }
@@ -83,6 +92,11 @@ class ServiceDetailArgs {
   const ServiceDetailArgs(this.serviceId);
 }
 
+class CheckoutArgs {
+  final CartModel cart;
+  const CheckoutArgs(this.cart);
+}
+
 /// Router trung tâm – dùng onGenerateRoute trong MaterialApp
 class AppRouter {
   AppRouter._();
@@ -97,10 +111,9 @@ class AppRouter {
 
       case AppRoutes.otpVerify:
         final args = settings.arguments as OtpVerifyArgs?;
-        return _slide(OtpVerifyPage(
-          email: args?.email ?? '',
-          is2fa: args?.is2fa ?? false,
-        ));
+        return _slide(
+          OtpVerifyPage(email: args?.email ?? '', is2fa: args?.is2fa ?? false),
+        );
 
       case AppRoutes.home:
         final args = settings.arguments as HomeArgs?;
@@ -203,6 +216,20 @@ class AppRouter {
         if (courtId == null) return _slide(const CourtListPage());
         return _slide(CourtDetailPage(courtId: courtId));
 
+      case AppRoutes.cart:
+        return _slide(const CartPage());
+
+      case AppRoutes.checkout:
+        final args = settings.arguments as CheckoutArgs?;
+        if (args == null) return _slide(const CartPage());
+        return _slide(CheckoutPage(cart: args.cart));
+
+      case AppRoutes.orderHistory:
+        return _slide(const OrderHistoryPage());
+
+      case AppRoutes.supportInbox:
+        return _slide(const SupportInboxPage());
+
       case AppRoutes.notFound:
         return _slide(const NotFoundPage());
 
@@ -224,22 +251,22 @@ class AppRouter {
 
   // Slide từ phải sang trái
   static PageRouteBuilder _slide(Widget page) => PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, animation, __, child) => SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
-          child: child,
-        ),
-        transitionDuration: const Duration(milliseconds: 250),
-      );
+    pageBuilder: (_, __, ___) => page,
+    transitionsBuilder: (_, animation, __, child) => SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+      child: child,
+    ),
+    transitionDuration: const Duration(milliseconds: 250),
+  );
 
   // Fade (cho màn hình chính)
   static PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
-        transitionDuration: const Duration(milliseconds: 300),
-      );
+    pageBuilder: (_, __, ___) => page,
+    transitionsBuilder: (_, animation, __, child) =>
+        FadeTransition(opacity: animation, child: child),
+    transitionDuration: const Duration(milliseconds: 300),
+  );
 }
