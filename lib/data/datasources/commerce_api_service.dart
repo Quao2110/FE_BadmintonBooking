@@ -93,6 +93,19 @@ class CommerceApiService {
     return url;
   }
 
+  Future<bool> confirmVnPayReturn(Map<String, String> queryParams) async {
+    final payload = await _get(
+      ApiConstants.paymentVnpayReturn,
+      query: queryParams,
+    );
+    final result = _toMap(_extractResult(payload));
+    final isSuccess = result['isSuccess'];
+    if (isSuccess is bool) {
+      return isSuccess;
+    }
+    return false;
+  }
+
   Future<List<SupportMessageModel>> getMessages() async {
     final payload = await _get(ApiConstants.messages);
     final list = _extractList(_extractResult(payload));

@@ -79,7 +79,8 @@ class ApiConstants {
   static const String adminInboxReply = '/api/admin/inbox/reply';
 
   // Dashboard endpoints
-  static const String dashboardBookingRevenue = '/api/dashboard/bookings/revenue';
+  static const String dashboardBookingRevenue =
+      '/api/dashboard/bookings/revenue';
   static const String dashboardOrderRevenue = '/api/dashboard/orders/revenue';
 
   // Cart endpoints
@@ -96,6 +97,7 @@ class ApiConstants {
   // Payment endpoints
   static const String paymentCreateVnpayLink =
       '/api/payments/vnpay/create-link';
+  static const String paymentVnpayReturn = '/api/payments/vnpay/return';
 
   // Support message endpoints
   static const String messages = '/api/inbox/messages';
