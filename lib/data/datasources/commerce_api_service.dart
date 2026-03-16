@@ -70,9 +70,17 @@ class CommerceApiService {
     return OrderModel.fromJson(_toMap(_extractResult(payload)));
   }
 
-  Future<String> createVnPayLink(String orderId) async {
+  Future<String> createVnPayLink({
+    required String txnRef,
+    required int amountVnd,
+    required String orderInfo,
+    String? ipAddr,
+  }) async {
     final payload = await _post(ApiConstants.paymentCreateVnpayLink, {
-      'orderId': orderId,
+      'txnRef': txnRef,
+      'amountVnd': amountVnd,
+      'orderInfo': orderInfo,
+      'ipAddr': ipAddr,
     });
 
     final result = _toMap(_extractResult(payload));

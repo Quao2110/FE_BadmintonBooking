@@ -25,6 +25,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   String _paymentMethod = 'COD';
   bool _isSubmitting = false;
+  bool _showValidationError = false;
 
   @override
   void dispose() {
@@ -35,7 +36,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) {
+      if (!mounted) return;
+      setState(() => _showValidationError = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please complete delivery information before checkout.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     try {
@@ -57,14 +71,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      AppNotification.showError(_friendlyError(e));
+      final message = _friendlyError(e);
+      AppNotification.showError(message);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   Future<void> _startVnpay(OrderModel order) async {
-    final url = await _commerce.createVnPayLink(order.id);
+    final amountVnd = order.totalAmount.round();
+    final url = await _commerce.createVnPayLink(
+      txnRef: order.id,
+      amountVnd: amountVnd,
+      orderInfo: 'Thanh toan don hang ${order.id}',
+    );
     if (!mounted) return;
 
     final result = await Navigator.push<bool>(
@@ -121,6 +145,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ),
       body: Form(
         key: _formKey,
+        autovalidateMode: _showValidationError
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [

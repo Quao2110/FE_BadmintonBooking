@@ -13,8 +13,22 @@ class VnpayWebviewPage extends StatefulWidget {
 }
 
 class _VnpayWebviewPageState extends State<VnpayWebviewPage> {
+  static const String _returnUrlPrefix = 'myapp://payment-result';
   late final WebViewController _controller;
   bool _isLoading = true;
+
+  void _finishFromUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      Navigator.pop(context, false);
+      return;
+    }
+
+    final code = uri.queryParameters['vnp_ResponseCode'] ?? '';
+    final txnStatus = uri.queryParameters['vnp_TransactionStatus'] ?? '';
+    final success = code == '00' && txnStatus == '00';
+    Navigator.pop(context, success);
+  }
 
   @override
   void initState() {
@@ -31,14 +45,16 @@ class _VnpayWebviewPageState extends State<VnpayWebviewPage> {
             if (uri == null) return NavigationDecision.navigate;
 
             if (_isReturnFromPayment(uri)) {
-              final code = uri.queryParameters['vnp_ResponseCode'] ?? '';
-              final txnStatus =
-                  uri.queryParameters['vnp_TransactionStatus'] ?? '';
-              final success = code == '00' && txnStatus == '00';
-              Navigator.pop(context, success);
+              _finishFromUrl(request.url);
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;
+          },
+          onWebResourceError: (error) {
+            final url = error.url;
+            if (url != null && url.startsWith(_returnUrlPrefix)) {
+              _finishFromUrl(url);
+            }
           },
         ),
       )
@@ -69,7 +85,8 @@ class _VnpayWebviewPageState extends State<VnpayWebviewPage> {
 
   bool _isReturnFromPayment(Uri uri) {
     final path = uri.path.toLowerCase();
-    return path.contains('/payments/vnpay/return') ||
+    return uri.toString().startsWith(_returnUrlPrefix) ||
+        path.contains('/payments/vnpay/return') ||
         uri.queryParameters.containsKey('vnp_ResponseCode');
   }
 }
