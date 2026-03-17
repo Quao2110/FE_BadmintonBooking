@@ -98,11 +98,8 @@ class _ProductListPageState extends State<ProductListPage> {
           ),
           actions: [
             IconButton(
-              onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRoutes.storeList,
-                (route) => false,
-              ),
+              onPressed: () =>
+                  Navigator.popUntil(context, (route) => route.isFirst),
               icon: const Icon(Icons.home_outlined),
               tooltip: 'Về trang chủ',
             ),
@@ -718,3 +715,6 @@ double? _parseDouble(String text) {
   if (normalized.isEmpty) return null;
   return double.tryParse(normalized);
 }
+
+
+
