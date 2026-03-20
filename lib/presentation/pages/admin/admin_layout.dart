@@ -250,7 +250,7 @@ class _AdminLayoutState extends State<AdminLayout> {
                 children: [
                   _MenuItem(
                     icon: Icons.dashboard_rounded,
-                    label: 'Trang chủ',
+                    label: 'Dashboard',
                     route: AppRoutes.adminDashboard,
                     currentRoute: widget.currentRoute,
                     isExpanded: isExpanded,
@@ -314,6 +314,48 @@ class _AdminLayoutState extends State<AdminLayout> {
                       Navigator.pushReplacementNamed(
                         context,
                         AppRoutes.adminShop,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.calendar_month_rounded,
+                    label: 'Đặt sân',
+                    route: AppRoutes.adminBookings,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminBookings,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.local_shipping_rounded,
+                    label: 'Đơn hàng',
+                    route: AppRoutes.adminOrders,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminOrders,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.inbox_rounded,
+                    label: 'Hộp thư',
+                    route: AppRoutes.adminInbox,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminInbox,
                         arguments: widget.user,
                       );
                     },
@@ -491,6 +533,12 @@ class _AdminLayoutState extends State<AdminLayout> {
         return 'Sản phẩm';
       case AppRoutes.adminShop:
         return 'Shop';
+      case AppRoutes.adminBookings:
+        return 'Quản lý Đặt sân';
+      case AppRoutes.adminOrders:
+        return 'Quản lý Đơn hàng';
+      case AppRoutes.adminInbox:
+        return 'Hộp thư CSKH';
       default:
         return 'Admin';
     }

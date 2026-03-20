@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 /// API URLs and endpoints
@@ -74,6 +74,39 @@ class ApiConstants {
   static const String bookingMyHistory = '/api/bookings/my-history';
   static String bookingById(String id) => '/api/bookings/$id';
   static String bookingCancel(String id) => '/api/bookings/$id/cancel';
+  static String bookingUpdateStatus(String id) => '/api/bookings/$id/status';
+
+  // Inbox endpoints (User)
+  static const String inboxMessages = '/api/inbox/messages';
+
+  // Admin Inbox endpoints
+  static const String adminInboxRooms = '/api/admin/inbox/rooms';
+  static const String adminInboxReply = '/api/admin/inbox/reply';
+
+  // Dashboard endpoints
+  static const String dashboardBookingRevenue =
+      '/api/dashboard/bookings/revenue';
+  static const String dashboardOrderRevenue = '/api/dashboard/orders/revenue';
+
+  // Cart endpoints
+  static const String cart = '/api/cart';
+  static const String cartAdd = '/api/cart/add';
+  static String cartItemById(String id) => '/api/cart/item/$id';
+  static const String cartClear = '/api/cart/clear';
+
+  // Order endpoints
+  static const String orderCheckout = '/api/orders/checkout';
+  static const String orderMyOrders = '/api/orders/my-orders';
+  static String orderById(String id) => '/api/orders/$id';
+
+  // Payment endpoints
+  static const String paymentCreateVnpayLink =
+      '/api/payments/vnpay/create-link';
+  static const String paymentVnpayReturn = '/api/payments/vnpay/return';
+
+  // Support message endpoints
+  static const String messages = '/api/inbox/messages';
+  static const String messagesSend = '/api/inbox/messages';
 
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';
