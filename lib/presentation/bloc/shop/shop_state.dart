@@ -60,3 +60,15 @@ class ShopError extends ShopState {
   @override
   List<Object?> get props => [message];
 }
+
+class ShopUpdating extends ShopState {
+  const ShopUpdating();
+}
+
+class ShopUpdateSuccess extends ShopState {
+  final ShopEntity shop;
+  final String message;
+  const ShopUpdateSuccess({required this.shop, required this.message});
+  @override
+  List<Object?> get props => [shop, message];
+}

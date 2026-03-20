@@ -1,4 +1,5 @@
 import '../datasources/user_api_service.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/user/update_user_request.dart';
 import '../models/user/create_user_request.dart';
 import '../models/user/user_response_model.dart';
@@ -7,11 +8,10 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/i_user_repository.dart';
 import '../../core/storage/local_storage.dart';
 
-
 class UserRepository implements IUserRepository {
   final UserRemoteDataSource _dataSource;
   UserRepository({UserRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? UserRemoteDataSource();
+    : _dataSource = dataSource ?? UserRemoteDataSource();
 
   @override
   Future<UserEntity> create(CreateUserRequest request) async {
@@ -46,15 +46,19 @@ class UserRepository implements IUserRepository {
     final res = await _dataSource.update(id, request);
     if (res.isSuccess && res.result != null) {
       final m = res.result!;
-      await LocalStorage.saveUserInfo(email: m.email, fullName: m.fullName, role: m.role);
+      await LocalStorage.saveUserInfo(
+        email: m.email,
+        fullName: m.fullName,
+        role: m.role,
+      );
       return _mapToEntity(m);
     }
     throw Exception(res.message);
   }
 
   @override
-  Future<String> uploadAvatar(String id, String imagePath) async {
-    final res = await _dataSource.uploadAvatar(id, imagePath);
+  Future<String> uploadAvatar(String id, XFile imageFile) async {
+    final res = await _dataSource.uploadAvatar(id, imageFile);
     if (res.isSuccess && res.result != null) {
       return res.result!;
     }

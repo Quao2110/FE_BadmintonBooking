@@ -19,10 +19,14 @@ class DioClient {
   static Dio _createDio() {
     final dio = Dio(
       BaseOptions(
-        baseUrl: ApiConstants.baseUrl,   // getter – platform-aware
-        connectTimeout: const Duration(milliseconds: ApiConstants.connectTimeout),
-        receiveTimeout: const Duration(milliseconds: ApiConstants.receiveTimeout),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        baseUrl: ApiConstants.baseUrl, // getter – platform-aware
+        connectTimeout: const Duration(
+          milliseconds: ApiConstants.connectTimeout,
+        ),
+        receiveTimeout: const Duration(
+          milliseconds: ApiConstants.receiveTimeout,
+        ),
+        headers: {'Accept': 'application/json'},
       ),
     );
 
@@ -40,6 +44,10 @@ class DioClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          if (options.data is FormData) {
+            options.contentType = Headers.multipartFormDataContentType;
+            options.headers.remove(Headers.contentTypeHeader);
+          }
           final token = await SecureStorage.getToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -50,12 +58,14 @@ class DioClient {
     );
 
     // Request/Response logger
-    dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      error: true,
-      logPrint: (obj) => print('[DIO] $obj'),
-    ));
+    dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        error: true,
+        logPrint: (obj) => print('[DIO] $obj'),
+      ),
+    );
 
     // Interceptor xử lý lỗi chung
     dio.interceptors.add(

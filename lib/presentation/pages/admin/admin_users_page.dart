@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../domain/entities/user.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../../data/models/user/update_user_request.dart';
-import '../../../main.dart';
 import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
@@ -246,6 +245,8 @@ class _AdminUsersContentState extends State<_AdminUsersContent> {
                           .map(
                             (user) => _UserCard(
                               user: user,
+                              onUploadAvatar: () =>
+                                  _showUploadAvatarDialog(context, user),
                               onEdit: () => _showEditDialog(context, user),
                               onDelete: () => _showDeleteDialog(context, user),
                             ),
@@ -349,6 +350,19 @@ class _AdminUsersContentState extends State<_AdminUsersContent> {
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.add_a_photo_outlined,
+                                              size: 20,
+                                            ),
+                                            color: Colors.teal,
+                                            tooltip: 'Cập nhật avatar',
+                                            onPressed: () =>
+                                                _showUploadAvatarDialog(
+                                                  context,
+                                                  user,
+                                                ),
+                                          ),
                                           IconButton(
                                             icon: const Icon(
                                               Icons.edit_outlined,
@@ -522,6 +536,14 @@ class _AdminUsersContentState extends State<_AdminUsersContent> {
     );
   }
 
+  void _showUploadAvatarDialog(BuildContext context, UserEntity user) {
+    showDialog(
+      context: context,
+      builder: (ctx) =>
+          _UploadUserAvatarDialog(user: user, bloc: context.read<UserBloc>()),
+    );
+  }
+
   void _showDeleteDialog(BuildContext context, UserEntity user) {
     showDialog(
       context: context,
@@ -600,11 +622,13 @@ class _StatChip extends StatelessWidget {
 
 class _UserCard extends StatelessWidget {
   final UserEntity user;
+  final VoidCallback onUploadAvatar;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _UserCard({
     required this.user,
+    required this.onUploadAvatar,
     required this.onEdit,
     required this.onDelete,
   });
@@ -709,6 +733,12 @@ class _UserCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
+                  icon: const Icon(Icons.add_a_photo_outlined, size: 20),
+                  color: Colors.teal,
+                  onPressed: onUploadAvatar,
+                  tooltip: 'Cập nhật avatar',
+                ),
+                IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   color: Colors.blue,
                   onPressed: onEdit,
@@ -725,6 +755,142 @@ class _UserCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _UploadUserAvatarDialog extends StatefulWidget {
+  final UserEntity user;
+  final UserBloc bloc;
+
+  const _UploadUserAvatarDialog({required this.user, required this.bloc});
+
+  @override
+  State<_UploadUserAvatarDialog> createState() =>
+      _UploadUserAvatarDialogState();
+}
+
+class _UploadUserAvatarDialogState extends State<_UploadUserAvatarDialog> {
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedImage;
+
+  Future<void> _pickImage() async {
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 90,
+      );
+      if (file != null && mounted) {
+        setState(() => _selectedImage = file);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể chọn ảnh: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _submit() {
+    if (_selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ảnh trước khi tải lên')),
+      );
+      return;
+    }
+
+    widget.bloc.add(
+      UploadUserAvatarEvent(id: widget.user.id, imageFile: _selectedImage!),
+    );
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCurrentAvatar =
+        widget.user.avatarUrl != null && widget.user.avatarUrl!.isNotEmpty;
+
+    return AlertDialog(
+      title: const Text('Cập nhật avatar người dùng'),
+      content: SizedBox(
+        width: 460,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.user.fullName ?? widget.user.email),
+            const SizedBox(height: 4),
+            SelectableText(
+              'ID: ${widget.user.id}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 70,
+                  backgroundColor: Colors.grey.shade200,
+                  backgroundImage: _selectedImage != null
+                      ? (kIsWeb
+                            ? NetworkImage(_selectedImage!.path)
+                            : FileImage(File(_selectedImage!.path))
+                                  as ImageProvider)
+                      : (hasCurrentAvatar
+                            ? NetworkImage(
+                                ApiConstants.getFullImageUrl(
+                                  widget.user.avatarUrl,
+                                ),
+                              )
+                            : null),
+                  child: (_selectedImage == null && !hasCurrentAvatar)
+                      ? const Icon(Icons.person, size: 56, color: Colors.grey)
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: const Text('Chọn file'),
+                ),
+                const SizedBox(width: 12),
+                if (_selectedImage != null)
+                  Expanded(
+                    child: Text(
+                      _selectedImage!.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy'),
+        ),
+        ElevatedButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.upload),
+          label: const Text('Tải lên'),
+        ),
+      ],
     );
   }
 }

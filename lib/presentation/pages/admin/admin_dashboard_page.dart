@@ -507,7 +507,7 @@ class _ErrorBanner extends StatelessWidget {
 }
 
 /// Stat Card Widget
-class _StatCard extends StatelessWidget {
+ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
@@ -528,12 +528,12 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
@@ -543,17 +543,15 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 26),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,8 +573,8 @@ class _StatCard extends StatelessWidget {
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

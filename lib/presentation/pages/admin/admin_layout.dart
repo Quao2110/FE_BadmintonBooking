@@ -48,42 +48,44 @@ class _AdminLayoutState extends State<AdminLayout> {
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            // Main content luôn có margin left 70px
-            Positioned.fill(
-              left: 70,
-              child: Column(
-                children: [
-                  _buildTopBar(context, isMobile: isMobile),
-                  Expanded(child: widget.child),
-                ],
-              ),
-            ),
-            // Backdrop khi sidebar expanded
-            if (_isSidebarExpanded)
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // Main content luôn có margin left 70px
               Positioned.fill(
                 left: 70,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isSidebarExpanded = false;
-                    });
-                  },
-                  child: Container(
-                    color: Colors.black.withOpacity(0.3),
-                  ),
+                child: Column(
+                  children: [
+                    _buildTopBar(context, isMobile: isMobile),
+                    Expanded(child: widget.child),
+                  ],
                 ),
               ),
-            // Sidebar overlay (luôn ở trên cùng)
-            _buildSidebar(context, isMobile: isMobile, screenWidth: screenWidth),
-          ],
+              // Backdrop khi sidebar expanded
+              if (_isSidebarExpanded)
+                Positioned.fill(
+                  left: 70,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isSidebarExpanded = false;
+                      });
+                    },
+                    child: Container(color: Colors.black.withOpacity(0.3)),
+                  ),
+                ),
+              // Sidebar overlay (luôn ở trên cùng)
+              _buildSidebar(
+                context,
+                isMobile: isMobile,
+                screenWidth: screenWidth,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
-
 
   // Top Bar
   Widget _buildTopBar(BuildContext context, {required bool isMobile}) {
@@ -91,10 +93,14 @@ class _AdminLayoutState extends State<AdminLayout> {
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -107,12 +113,12 @@ class _AdminLayoutState extends State<AdminLayout> {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Colors.white,
             ),
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {},
           ),
           const SizedBox(width: 8),
@@ -126,9 +132,10 @@ class _AdminLayoutState extends State<AdminLayout> {
               );
             },
             icon: const Icon(Icons.home_rounded, size: 18),
-            label: const Text('Về trang User'),
+            label: const Text('Về User'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              side: const BorderSide(color: Colors.white70),
             ),
           ),
         ],
@@ -137,10 +144,14 @@ class _AdminLayoutState extends State<AdminLayout> {
   }
 
   // Sidebar content
-  Widget _buildSidebar(BuildContext context, {required bool isMobile, required double screenWidth}) {
+  Widget _buildSidebar(
+    BuildContext context, {
+    required bool isMobile,
+    required double screenWidth,
+  }) {
     final isExpanded = _isSidebarExpanded;
     final sidebarWidth = isExpanded ? (screenWidth * 0.75) : 70.0;
-    
+
     return Positioned(
       left: 0,
       top: 0,
@@ -161,332 +172,350 @@ class _AdminLayoutState extends State<AdminLayout> {
         ),
         child: Column(
           children: [
-          // Header
-          Container(
-            height: 70,
-            padding: EdgeInsets.symmetric(horizontal: isExpanded ? 16 : 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.1),
-            ),
-            child: Row(
-              mainAxisAlignment: isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-              children: [
-                if (!isExpanded) ...[
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.white,
-                        size: 24,
+            // Header
+            Container(
+              height: 70,
+              padding: EdgeInsets.symmetric(horizontal: isExpanded ? 16 : 4),
+              decoration: BoxDecoration(color: Colors.black.withOpacity(0.1)),
+              child: Row(
+                mainAxisAlignment: isExpanded
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  if (!isExpanded) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isSidebarExpanded = true;
-                        });
-                      },
-                      tooltip: 'Mở rộng',
-                    ),
-                  ),
-                ] else ...[
-                  const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Admin Panel',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isSidebarExpanded = true;
+                          });
+                        },
+                        tooltip: 'Mở rộng',
                       ),
                     ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                  ] else ...[
+                    const Icon(
+                      Icons.admin_panel_settings_rounded,
+                      color: Colors.white,
+                      size: 32,
                     ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.chevron_left_rounded,
-                        color: Colors.white,
-                        size: 24,
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Admin Panel',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isSidebarExpanded = false;
-                        });
-                      },
-                      tooltip: 'Thu gọn',
                     ),
-                  ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.chevron_left_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isSidebarExpanded = false;
+                          });
+                        },
+                        tooltip: 'Thu gọn',
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ),
-
-          // Menu Items
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              children: [
-                _MenuItem(
-                  icon: Icons.dashboard_rounded,
-                  label: 'Dashboard',
-                  route: AppRoutes.adminDashboard,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminDashboard,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.people_outline_rounded,
-                  label: 'Quản lý Users',
-                  route: AppRoutes.admin,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.admin,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.sports_tennis_rounded,
-                  label: 'Quản lý Sân',
-                  route: AppRoutes.adminCourts,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminCourts,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.shopping_bag_outlined,
-                  label: 'Quản lý Sản phẩm',
-                  route: AppRoutes.adminProducts,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminProducts,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.store_rounded,
-                  label: 'Cài đặt Shop',
-                  route: AppRoutes.adminShop,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminShop,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.calendar_month_rounded,
-                  label: 'Đặt sân',
-                  route: AppRoutes.adminBookings,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminBookings,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.local_shipping_rounded,
-                  label: 'Đơn hàng',
-                  route: AppRoutes.adminOrders,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminOrders,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: Icons.inbox_rounded,
-                  label: 'Hộp thư',
-                  route: AppRoutes.adminInbox,
-                  currentRoute: widget.currentRoute,
-                  isExpanded: isExpanded,
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.adminInbox,
-                      arguments: widget.user,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // User Info & Logout
-          Container(
-            padding: EdgeInsets.all(isExpanded ? 16 : 8),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.white.withOpacity(0.1)),
               ),
             ),
-            child: Column(
-              children: [
-                if (isExpanded) ...[
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white.withOpacity(0.2),
-                        child: Text(
-                          widget.user.fullName?.substring(0, 1).toUpperCase() ?? 'A',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.user.fullName ?? 'Admin',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              widget.user.role ?? 'Administrator',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              AppRoutes.home,
-                              (route) => false,
-                              arguments: HomeArgs(widget.user),
-                            );
-                          },
-                          icon: const Icon(Icons.home_rounded, size: 16),
-                          label: const Text('User', style: TextStyle(fontSize: 13)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            context.read<AuthBloc>().add(const LogoutEvent());
-                          },
-                          icon: const Icon(Icons.logout_rounded, size: 16),
-                          label: const Text('Out', style: TextStyle(fontSize: 13)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  // Collapsed sidebar: chỉ hiện các icon buttons
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                    child: Text(
-                      widget.user.fullName?.substring(0, 1).toUpperCase() ?? 'A',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  IconButton(
-                    icon: const Icon(Icons.home_rounded, color: Colors.white, size: 22),
-                    onPressed: () {
-                      Navigator.pushNamedAndRemoveUntil(
+
+            // Menu Items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                children: [
+                  _MenuItem(
+                    icon: Icons.dashboard_rounded,
+                    label: 'Dashboard',
+                    route: AppRoutes.adminDashboard,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
                         context,
-                        AppRoutes.home,
-                        (route) => false,
-                        arguments: HomeArgs(widget.user),
+                        AppRoutes.adminDashboard,
+                        arguments: widget.user,
                       );
                     },
-                    tooltip: 'Về trang User',
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
-                    onPressed: () {
-                      context.read<AuthBloc>().add(const LogoutEvent());
+                  _MenuItem(
+                    icon: Icons.people_outline_rounded,
+                    label: 'Quản lý Users',
+                    route: AppRoutes.admin,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.admin,
+                        arguments: widget.user,
+                      );
                     },
-                    tooltip: 'Đăng xuất',
+                  ),
+                  _MenuItem(
+                    icon: Icons.sports_tennis_rounded,
+                    label: 'Quản lý Sân',
+                    route: AppRoutes.adminCourts,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminCourts,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Quản lý Sản phẩm',
+                    route: AppRoutes.adminProducts,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminProducts,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.store_rounded,
+                    label: 'Cài đặt Shop',
+                    route: AppRoutes.adminShop,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminShop,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.calendar_month_rounded,
+                    label: 'Đặt sân',
+                    route: AppRoutes.adminBookings,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminBookings,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.local_shipping_rounded,
+                    label: 'Đơn hàng',
+                    route: AppRoutes.adminOrders,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminOrders,
+                        arguments: widget.user,
+                      );
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.inbox_rounded,
+                    label: 'Hộp thư',
+                    route: AppRoutes.adminInbox,
+                    currentRoute: widget.currentRoute,
+                    isExpanded: isExpanded,
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.adminInbox,
+                        arguments: widget.user,
+                      );
+                    },
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+
+            // User Info & Logout
+            Container(
+              padding: EdgeInsets.all(isExpanded ? 16 : 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Colors.white.withOpacity(0.1)),
+                ),
+              ),
+              child: Column(
+                children: [
+                  if (isExpanded) ...[
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          child: Text(
+                            widget.user.fullName
+                                    ?.substring(0, 1)
+                                    .toUpperCase() ??
+                                'A',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.user.fullName ?? 'Admin',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                widget.user.role ?? 'Administrator',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                AppRoutes.home,
+                                (route) => false,
+                                arguments: HomeArgs(widget.user),
+                              );
+                            },
+                            icon: const Icon(Icons.home_rounded, size: 16),
+                            label: const Text(
+                              'User',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.1),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.read<AuthBloc>().add(const LogoutEvent());
+                            },
+                            icon: const Icon(Icons.logout_rounded, size: 16),
+                            label: const Text(
+                              'Out',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.1),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    // Collapsed sidebar: chỉ hiện các icon buttons
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      child: Text(
+                        widget.user.fullName?.substring(0, 1).toUpperCase() ??
+                            'A',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.home_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.home,
+                          (route) => false,
+                          arguments: HomeArgs(widget.user),
+                        );
+                      },
+                      tooltip: 'Về trang User',
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        context.read<AuthBloc>().add(const LogoutEvent());
+                      },
+                      tooltip: 'Đăng xuất',
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -495,7 +524,7 @@ class _AdminLayoutState extends State<AdminLayout> {
   String _getPageTitle(String route) {
     switch (route) {
       case AppRoutes.adminDashboard:
-        return 'Dashboard';
+        return 'Trang chủ';
       case AppRoutes.admin:
         return 'Users';
       case AppRoutes.adminCourts:
@@ -552,20 +581,20 @@ class _MenuItem extends StatelessWidget {
             vertical: 14,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+            color: isSelected
+                ? Colors.white.withOpacity(0.15)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: isSelected
                 ? Border.all(color: Colors.white.withOpacity(0.3))
                 : null,
           ),
           child: Row(
-            mainAxisAlignment: isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisAlignment: isExpanded
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                color: Colors.white,
-                size: 24,
-              ),
+              Icon(icon, color: Colors.white, size: 24),
               if (isExpanded) ...[
                 const SizedBox(width: 16),
                 Expanded(
@@ -574,7 +603,9 @@ class _MenuItem extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
