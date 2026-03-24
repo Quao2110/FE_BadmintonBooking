@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 /// API URLs and endpoints
@@ -12,7 +12,7 @@ class ApiConstants {
     const env = String.fromEnvironment('API_BASE_URL');
     if (env.isNotEmpty) return env;
     const envScheme = String.fromEnvironment('API_SCHEME');
-    final scheme = envScheme.isNotEmpty ? envScheme : 'https';
+    final scheme = envScheme.isNotEmpty ? envScheme : 'http';
     final port = scheme == 'https' ? 7133 : 5000;
     if (!kIsWeb && Platform.isAndroid) {
       return '$scheme://10.0.2.2:$port';
@@ -42,6 +42,8 @@ class ApiConstants {
   // Product endpoints
   static const String products = '/api/products';
   static String productById(String id) => '/api/products/$id';
+  static const String productImages = '/api/product-images';
+  static String productImageById(String id) => '/api/product-images/$id';
 
   // Service endpoints
   static const String services = '/api/services';
@@ -49,15 +51,20 @@ class ApiConstants {
 
   // Notification endpoints
   static const String notifications = '/api/Notifications';
-  static String notificationsByUserId(String userId) => '/api/Notifications/user/$userId';
-  static String notificationMarkAsRead(String id) => '/api/Notifications/mark-as-read/$id';
+  static String notificationsByUserId(String userId) =>
+      '/api/Notifications/user/$userId';
+  static String notificationMarkAsRead(String id) =>
+      '/api/Notifications/mark-as-read/$id';
 
   // Court endpoints
   static const String courts = '/api/courts';
   static String courtById(String id) => '/api/courts/$id';
+  static const String courtImages = '/api/courts/images';
+  static String courtImageById(String id) => '/api/courts/images/$id';
 
   // Shop endpoints
   static const String shops = '/api/Shops';
+  static const String shopsAll = '/api/Shops/all';
   static String shopById(String id) => '/api/Shops/$id';
   static const String shopDistance = '/api/Shops/distance';
 
@@ -67,11 +74,53 @@ class ApiConstants {
   static const String bookingMyHistory = '/api/bookings/my-history';
   static String bookingById(String id) => '/api/bookings/$id';
   static String bookingCancel(String id) => '/api/bookings/$id/cancel';
+  static String bookingUpdateStatus(String id) => '/api/bookings/$id/status';
+
+  // Inbox endpoints (User)
+  static const String inboxMessages = '/api/inbox/messages';
+
+  // Admin Inbox endpoints
+  static const String adminInboxRooms = '/api/admin/inbox/rooms';
+  static const String adminInboxReply = '/api/admin/inbox/reply';
+
+  // Dashboard endpoints
+  static const String dashboardBookingRevenue =
+      '/api/dashboard/bookings/revenue';
+  static const String dashboardOrderRevenue = '/api/dashboard/orders/revenue';
+
+  // Cart endpoints
+  static const String cart = '/api/cart';
+  static const String cartAdd = '/api/cart/add';
+  static String cartItemById(String id) => '/api/cart/item/$id';
+  static const String cartClear = '/api/cart/clear';
+
+  // Order endpoints
+  static const String orders = '/api/orders';
+  static const String orderCheckout = '/api/orders/checkout';
+  static const String orderMyOrders = '/api/orders/my-orders';
+  static String orderById(String id) => '/api/orders/$id';
+  static String orderUpdateStatus(String id) => '/api/orders/$id/status';
+  static String orderCancel(String id) => '/api/orders/$id/cancel';
+
+  // Payment endpoints
+  static const String paymentCreateVnpayLink =
+      '/api/payments/vnpay/create-link';
+  static const String paymentCreateVnpayBookingLink =
+      '/api/payments/vnpay/create-booking-link';
+  static const String paymentVnpayReturn = '/api/payments/vnpay/return';
+
+  // Support message endpoints
+  static const String messages = '/api/inbox/messages';
+  static const String messagesSend = '/api/inbox/messages';
 
   static String getFullImageUrl(String? relativePath) {
     if (relativePath == null || relativePath.isEmpty) return '';
-    if (relativePath.startsWith('http')) return relativePath;
-    return '${baseUrl}$relativePath';
+    final normalized = relativePath.trim().replaceAll('\\', '/');
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      return normalized;
+    }
+    final path = normalized.startsWith('/') ? normalized : '/$normalized';
+    return '${baseUrl}$path';
   }
 
   // Timeout (milliseconds)

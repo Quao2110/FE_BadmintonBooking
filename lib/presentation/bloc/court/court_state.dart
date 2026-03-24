@@ -29,6 +29,14 @@ class CourtDetailLoaded extends CourtState {
   List<Object?> get props => [court];
 }
 
+class CourtActionSuccess extends CourtState {
+  final String message;
+  const CourtActionSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 class CourtError extends CourtState {
   final String message;
   const CourtError(this.message);

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 class UpdateUserRequest {
@@ -38,15 +39,16 @@ class UpdateUserRequest {
 
     // Prioritize imageFile (XFile from picker) over avatarPath
     if (imageFile != null) {
-      formData.files.add(
-        MapEntry(
-          'Avatar',
-          await MultipartFile.fromFile(
-            imageFile!.path,
-            filename: imageFile!.name,
-          ),
-        ),
-      );
+      final avatarFile = kIsWeb
+          ? MultipartFile.fromBytes(
+              await imageFile!.readAsBytes(),
+              filename: imageFile!.name,
+            )
+          : await MultipartFile.fromFile(
+              imageFile!.path,
+              filename: imageFile!.name,
+            );
+      formData.files.add(MapEntry('Avatar', avatarFile));
     } else if (avatarPath != null && avatarPath!.isNotEmpty) {
       formData.files.add(
         MapEntry(

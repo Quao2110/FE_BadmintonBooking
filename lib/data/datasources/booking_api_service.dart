@@ -105,4 +105,54 @@ class BookingRemoteDataSource {
       throw ServerException(message: e.toString());
     }
   }
+
+  /// Admin cập nhật trạng thái booking (Approve/Reject/...) – PATCH /api/bookings/{id}/status
+  Future<ApiResponse<BookingResponseModel>> updateBookingStatus(
+      String bookingId, String status) async {
+    try {
+      final res = await dio.patch(
+        ApiConstants.bookingUpdateStatus(bookingId),
+        data: {'status': status},
+      );
+      return ApiResponse.fromJson(
+        res.data,
+        (json) => BookingResponseModel.fromJson(json as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      if (e.error is Exception) throw e.error!;
+      throw ServerException(message: e.message ?? 'Lỗi kết nối máy chủ');
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  /// Lấy tất cả booking (admin) – dùng GET /api/bookings/my-history với pageSize lớn
+  /// hoặc bổ sung endpoint admin nếu BE có sau
+  Future<ApiResponse<List<BookingResponseModel>>> getAllBookings({
+    int page = 1,
+    int pageSize = 50,
+    String? status,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'page': page,
+        'pageSize': pageSize,
+      };
+      if (status != null) params['status'] = status;
+      final res = await dio.get(ApiConstants.bookingMyHistory, queryParameters: params);
+      return ApiResponse.fromJson(res.data, (json) {
+        final pagedResult = json as Map<String, dynamic>;
+        final items = pagedResult['items'] as List? ?? [];
+        return items
+            .map((e) => BookingResponseModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      });
+    } on DioException catch (e) {
+      if (e.error is Exception) throw e.error!;
+      throw ServerException(message: e.message ?? 'Lỗi kết nối máy chủ');
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
 }
+

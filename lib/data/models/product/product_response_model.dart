@@ -26,22 +26,58 @@ class ProductResponseModel {
   });
 
   factory ProductResponseModel.fromJson(Map<String, dynamic> json) {
-    final imagesJson = json['productImages'] as List<dynamic>?;
+    String? pickString(List<String> keys) {
+      for (final key in keys) {
+        final value = json[key];
+        if (value == null) continue;
+        final text = value.toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+      return null;
+    }
+
+    List<dynamic>? pickList(List<String> keys) {
+      for (final key in keys) {
+        final value = json[key];
+        if (value is List) return value;
+      }
+      return null;
+    }
+
+    final imagesJson = pickList([
+      'productImages',
+      'ProductImages',
+      'images',
+      'Images',
+    ]);
+
     return ProductResponseModel(
-      id: json['id']?.toString() ?? '',
-      categoryId: json['categoryId']?.toString() ?? '',
-      categoryName: json['categoryName'],
-      productName: json['productName'] ?? '',
-      description: json['description'],
+      id: pickString(['id', 'Id']) ?? '',
+      categoryId: pickString(['categoryId', 'CategoryId']) ?? '',
+      categoryName: pickString(['categoryName', 'CategoryName']),
+      productName:
+          pickString(['productName', 'ProductName', 'name', 'Name']) ?? '',
+      description: pickString(['description', 'Description']),
       price: (json['price'] as num?)?.toDouble() ?? 0,
-      imageUrl: json['imageUrl'],
+      imageUrl: pickString([
+        'imageUrl',
+        'ImageUrl',
+        'url',
+        'Url',
+        'path',
+        'Path',
+      ]),
       stockQuantity: json['stockQuantity'] ?? 0,
       isActive: json['isActive'] ?? false,
       productImages: imagesJson == null
           ? const []
           : imagesJson
-              .map((e) => ProductImageResponseModel.fromJson(e as Map<String, dynamic>))
-              .toList(),
+                .map(
+                  (e) => ProductImageResponseModel.fromJson(
+                    e as Map<String, dynamic>,
+                  ),
+                )
+                .toList(),
     );
   }
 }

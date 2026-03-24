@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/user.dart';
-import '../../../main.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -13,7 +12,6 @@ import '../../../core/theme/colors.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../bloc/shop/shop_bloc.dart';
 import '../../bloc/shop/shop_state.dart';
-import '../court/court_list_page.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;
@@ -54,7 +52,10 @@ class HomeScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                   elevation: 0,
                   flexibleSpace: FlexibleSpaceBar(
-                    titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    titlePadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     title: Text(
                       'Xin chào, ${currentUser.fullName?.split(' ').last ?? 'bạn'} 👋',
                       style: const TextStyle(
@@ -101,7 +102,8 @@ class HomeScreen extends StatelessWidget {
                     _NotificationButton(),
                     IconButton(
                       icon: const Icon(Icons.logout_rounded),
-                      onPressed: () => context.read<AuthBloc>().add(const LogoutEvent()),
+                      onPressed: () =>
+                          context.read<AuthBloc>().add(const LogoutEvent()),
                     ),
                   ],
                 ),
@@ -114,64 +116,113 @@ class HomeScreen extends StatelessWidget {
                       // Sleek Profile Snippet
                       _HomeProfileSnippet(user: currentUser),
                       const SizedBox(height: 28),
-                      
+
                       // Section Header
                       _SectionHeader(
                         title: 'Dịch vụ chính',
                         seeAllText: 'Xem tất cả sân',
-                        onSeeAll: () => Navigator.pushNamed(context, AppRoutes.courtList),
+                        onSeeAll: () =>
+                            Navigator.pushNamed(context, AppRoutes.courtList),
                       ),
                       const SizedBox(height: 16),
 
                       // Quick Actions Grid
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _FeatureCard(
-                                  title: 'Đặt sân ngay',
-                                  icon: Icons.calendar_today_rounded,
-                                  color: kombuGreen,
-                                  onTap: () => Navigator.pushNamed(context, AppRoutes.booking),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _FeatureCard(
-                                  title: 'Cửa hàng',
-                                  icon: Icons.shopping_bag_outlined,
-                                  color: mossGreen,
-                                  onTap: () => Navigator.pushNamed(context, AppRoutes.storeList),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                      // Row 1: Booking
                       Row(
                         children: [
                           Expanded(
                             child: _FeatureCard(
-                              title: 'Dịch vụ',
-                              icon: Icons.cleaning_services_outlined,
-                              color: tanColor,
-                              onTap: () => Navigator.pushNamed(context, AppRoutes.serviceList),
+                              title: 'Đặt sân ngay',
+                              icon: Icons.calendar_today_rounded,
+                              color: kombuGreen,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.booking,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: _FeatureCard(
-                              title: 'Lịch sử',
+                              title: 'Lịch sử đặt sân',
                               icon: Icons.history_rounded,
-                              color: cafeNoir,
-                              onTap: () => Navigator.pushNamed(context, AppRoutes.bookingHistory),
+                              color: mossGreen,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.bookingHistory,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      
+                      const SizedBox(height: 16),
+                      // Row 2: Commerce
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Cửa hàng',
+                              icon: Icons.shopping_bag_outlined,
+                              color: tanColor,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.storeList,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Đơn hàng',
+                              icon: Icons.receipt_long_outlined,
+                              color: cafeNoir,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.orderHistory,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Row 3: Utilities
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Giỏ hàng',
+                              icon: Icons.shopping_cart_outlined,
+                              color: mossGreen,
+                              onTap: () =>
+                                  Navigator.pushNamed(context, AppRoutes.cart),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Dịch vụ',
+                              icon: Icons.cleaning_services_outlined,
+                              color: kombuGreen,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.serviceList,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Row 4: Support (full-width)
+                      _FeatureCard(
+                        title: 'Hỗ trợ',
+                        icon: Icons.support_agent_outlined,
+                        color: tanColor,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.supportInbox,
+                        ),
+                      ),
+
                       const SizedBox(height: 32),
                       const _SectionHeader(title: 'Vị trí của chúng tôi'),
                       const SizedBox(height: 16),
@@ -186,13 +237,20 @@ class HomeScreen extends StatelessWidget {
                             );
                           } else if (shopState is ShopLoaded) {
                             final shop = shopState.shop;
-                            if (shop.latitude != null && shop.longitude != null) {
-                              final shopPos = LatLng(shop.latitude!, shop.longitude!);
+                            if (shop.latitude != null &&
+                                shop.longitude != null) {
+                              final shopPos = LatLng(
+                                shop.latitude!,
+                                shop.longitude!,
+                              );
                               return Container(
                                 height: 200,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white, width: 4),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 4,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.1),
@@ -212,7 +270,9 @@ class HomeScreen extends StatelessWidget {
                                       markerId: const MarkerId('shop'),
                                       position: shopPos,
                                       infoWindow: InfoWindow(
-                                        title: shop.id == 'current' ? 'Vị trí của bạn' : shop.shopName,
+                                        title: shop.id == 'current'
+                                            ? 'Vị trí của bạn'
+                                            : shop.shopName,
                                         snippet: shop.address,
                                       ),
                                     ),
@@ -227,7 +287,9 @@ class HomeScreen extends StatelessWidget {
                           }
                           return const SizedBox(
                             height: 200,
-                            child: Center(child: Text('Đang tải vị trí shop...')),
+                            child: Center(
+                              child: Text('Đang tải vị trí shop...'),
+                            ),
                           );
                         },
                       ),
@@ -242,10 +304,13 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.person_outline_rounded,
                         onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => ProfilePage(userId: currentUser.id ?? '')),
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ProfilePage(userId: currentUser.id ?? ''),
+                          ),
                         ),
                       ),
-                      
+
                       if (currentUser.role?.toLowerCase() == 'admin') ...[
                         const SizedBox(height: 12),
                         _MenuListItem(
@@ -254,7 +319,11 @@ class HomeScreen extends StatelessWidget {
                           onTap: () {
                             // Kiểm tra quyền trước khi cho phép truy cập
                             if (AppRouter.checkAdminAccess(currentUser)) {
-                              Navigator.pushNamed(context, AppRoutes.admin);
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.admin,
+                                arguments: currentUser,
+                              );
                             } else {
                               Navigator.pushNamed(context, AppRoutes.forbidden);
                             }
@@ -281,7 +350,8 @@ class _NotificationButton extends StatelessWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.notifications_none_rounded),
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.notifications),
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.notifications),
         ),
         Positioned(
           right: 12,
@@ -294,7 +364,7 @@ class _NotificationButton extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -305,11 +375,7 @@ class _SectionHeader extends StatelessWidget {
   final String? seeAllText;
   final VoidCallback? onSeeAll;
 
-  const _SectionHeader({
-    required this.title,
-    this.seeAllText,
-    this.onSeeAll,
-  });
+  const _SectionHeader({required this.title, this.seeAllText, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
@@ -346,7 +412,11 @@ class _SectionHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: mossGreen),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 10,
+                    color: mossGreen,
+                  ),
                 ],
               ),
             ),
@@ -385,11 +455,17 @@ class _HomeProfileSnippet extends StatelessWidget {
               children: [
                 Text(
                   user.fullName ?? 'Quý khách',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 Text(
                   user.email,
-                  style: TextStyle(color: cafeNoir.withOpacity(0.5), fontSize: 13),
+                  style: TextStyle(
+                    color: cafeNoir.withOpacity(0.5),
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -398,9 +474,11 @@ class _HomeProfileSnippet extends StatelessWidget {
             icon: const Icon(Icons.edit_outlined, size: 20, color: mossGreen),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => ProfilePage(userId: user.id ?? '')),
+              MaterialPageRoute(
+                builder: (_) => ProfilePage(userId: user.id ?? ''),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -436,8 +514,12 @@ class _AvatarSmall extends StatelessWidget {
       color: mossGreen.withOpacity(0.1),
       child: Center(
         child: Text(
-          (user.fullName?.isNotEmpty == true ? user.fullName![0] : '?').toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold, color: kombuGreen),
+          (user.fullName?.isNotEmpty == true ? user.fullName![0] : '?')
+              .toUpperCase(),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: kombuGreen,
+          ),
         ),
       ),
     );
@@ -484,7 +566,10 @@ class _FeatureCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -499,7 +584,11 @@ class _MenuListItem extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _MenuListItem({required this.label, required this.icon, required this.onTap});
+  const _MenuListItem({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -518,7 +607,10 @@ class _MenuListItem extends StatelessWidget {
           ),
           child: Icon(icon, color: kombuGreen, size: 20),
         ),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        title: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
         trailing: const Icon(Icons.chevron_right_rounded, color: boneColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
