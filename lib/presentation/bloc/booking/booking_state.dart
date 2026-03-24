@@ -70,9 +70,16 @@ class BookingDataLoaded extends BookingState {
   }
 
   /// Kiểm tra có thể booking hay không
+  bool get hasPastTimeSelection {
+    final startTime = selectedStartTime;
+    if (startTime == null) return false;
+    return !startTime.isAfter(DateTime.now());
+  }
+
   bool get canBook =>
       selectedCourt != null &&
           selectedSlotIndices.isNotEmpty &&
+          !hasPastTimeSelection &&
           !isCreating;
 
   /// Lấy thời gian bắt đầu và kết thúc từ các slot đã chọn
