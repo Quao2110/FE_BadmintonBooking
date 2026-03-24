@@ -120,53 +120,53 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 16),
 
                       // Quick Actions Grid
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _FeatureCard(
-                                  title: 'Đặt sân ngay',
-                                  icon: Icons.calendar_today_rounded,
-                                  color: kombuGreen,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.booking,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _FeatureCard(
-                                  title: 'Cửa hàng',
-                                  icon: Icons.shopping_bag_outlined,
-                                  color: mossGreen,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.storeList,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                      // Row 1: Booking
                       Row(
                         children: [
                           Expanded(
                             child: _FeatureCard(
-                              title: 'Gio hang',
-                              icon: Icons.shopping_cart_outlined,
-                              color: tanColor,
-                              onTap: () =>
-                                  Navigator.pushNamed(context, AppRoutes.cart),
+                              title: 'Đặt sân ngay',
+                              icon: Icons.calendar_today_rounded,
+                              color: kombuGreen,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.booking,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: _FeatureCard(
-                              title: 'Don hang',
+                              title: 'Lịch sử đặt sân',
+                              icon: Icons.history_rounded,
+                              color: mossGreen,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.bookingHistory,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Row 2: Commerce
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Cửa hàng',
+                              icon: Icons.shopping_bag_outlined,
+                              color: tanColor,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.storeList,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Đơn hàng',
                               icon: Icons.receipt_long_outlined,
                               color: cafeNoir,
                               onTap: () => Navigator.pushNamed(
@@ -178,32 +178,42 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      // Row 3: Utilities
                       Row(
                         children: [
                           Expanded(
                             child: _FeatureCard(
-                              title: 'Dich vu',
-                              icon: Icons.cleaning_services_outlined,
+                              title: 'Giỏ hàng',
+                              icon: Icons.shopping_cart_outlined,
                               color: mossGreen,
+                              onTap: () =>
+                                  Navigator.pushNamed(context, AppRoutes.cart),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _FeatureCard(
+                              title: 'Dịch vụ',
+                              icon: Icons.cleaning_services_outlined,
+                              color: kombuGreen,
                               onTap: () => Navigator.pushNamed(
                                 context,
                                 AppRoutes.serviceList,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _FeatureCard(
-                              title: 'Ho tro',
-                              icon: Icons.support_agent_outlined,
-                              color: kombuGreen,
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.supportInbox,
-                              ),
-                            ),
-                          ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Row 4: Support (full-width)
+                      _FeatureCard(
+                        title: 'Hỗ trợ',
+                        icon: Icons.support_agent_outlined,
+                        color: tanColor,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.supportInbox,
+                        ),
                       ),
 
                       const SizedBox(height: 32),
