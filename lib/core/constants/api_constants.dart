@@ -102,6 +102,8 @@ class ApiConstants {
   // Payment endpoints
   static const String paymentCreateVnpayLink =
       '/api/payments/vnpay/create-link';
+  static const String paymentCreateVnpayBookingLink =
+      '/api/payments/vnpay/create-booking-link';
   static const String paymentVnpayReturn = '/api/payments/vnpay/return';
 
   // Support message endpoints

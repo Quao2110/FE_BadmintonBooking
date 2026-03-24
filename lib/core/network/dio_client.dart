@@ -95,7 +95,11 @@ class DioClient {
           final finalMessage = serverMessage ?? 'Lỗi kết nối máy chủ';
 
           if (statusCode == 401) {
-            return handler.reject(e.copyWith(error: UnauthorizedException(message: finalMessage)));
+            return handler.reject(e.copyWith(
+              error: UnauthorizedException(
+                message: serverMessage ?? 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.',
+              ),
+            ));
           }
 
           return handler.reject(e.copyWith(error: ServerException(message: finalMessage)));
