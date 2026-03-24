@@ -17,6 +17,16 @@ class ChatRoomModel {
   });
 
   factory ChatRoomModel.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDate(List<String> keys) {
+      for (final key in keys) {
+        final value = json[key];
+        if (value == null) continue;
+        final parsed = DateTime.tryParse(value.toString());
+        if (parsed != null) return parsed;
+      }
+      return null;
+    }
+
     return ChatRoomModel(
       chatRoomId: json['chatRoomId']?.toString() ??
           json['id']?.toString() ??
@@ -24,9 +34,7 @@ class ChatRoomModel {
       userId: json['userId']?.toString() ?? '',
       userName: json['userName'] as String?,
       lastMessage: json['lastMessage'] as String?,
-      lastMessageAt: json['lastMessageAt'] != null
-          ? DateTime.tryParse(json['lastMessageAt'].toString())
-          : null,
+      lastMessageAt: parseDate(['lastMessageAt', 'updatedAt']),
     );
   }
 

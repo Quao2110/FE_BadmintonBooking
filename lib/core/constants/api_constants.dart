@@ -12,7 +12,7 @@ class ApiConstants {
     const env = String.fromEnvironment('API_BASE_URL');
     if (env.isNotEmpty) return env;
     const envScheme = String.fromEnvironment('API_SCHEME');
-    final scheme = envScheme.isNotEmpty ? envScheme : 'https';
+    final scheme = envScheme.isNotEmpty ? envScheme : 'http';
     final port = scheme == 'https' ? 7133 : 5000;
     if (!kIsWeb && Platform.isAndroid) {
       return '$scheme://10.0.2.2:$port';
@@ -95,9 +95,12 @@ class ApiConstants {
   static const String cartClear = '/api/cart/clear';
 
   // Order endpoints
+  static const String orders = '/api/orders';
   static const String orderCheckout = '/api/orders/checkout';
   static const String orderMyOrders = '/api/orders/my-orders';
   static String orderById(String id) => '/api/orders/$id';
+  static String orderUpdateStatus(String id) => '/api/orders/$id/status';
+  static String orderCancel(String id) => '/api/orders/$id/cancel';
 
   // Payment endpoints
   static const String paymentCreateVnpayLink =

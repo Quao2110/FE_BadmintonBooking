@@ -814,70 +814,79 @@ class _UploadUserAvatarDialogState extends State<_UploadUserAvatarDialog> {
   Widget build(BuildContext context) {
     final hasCurrentAvatar =
         widget.user.avatarUrl != null && widget.user.avatarUrl!.isNotEmpty;
+    final media = MediaQuery.of(context);
+    final isLandscape = media.orientation == Orientation.landscape;
+    final maxDialogHeight = media.size.height * (isLandscape ? 0.82 : 0.72);
+    final avatarRadius = isLandscape ? 54.0 : 70.0;
 
     return AlertDialog(
       title: const Text('Cập nhật avatar người dùng'),
-      content: SizedBox(
-        width: 460,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.user.fullName ?? widget.user.email),
-            const SizedBox(height: 4),
-            SelectableText(
-              'ID: ${widget.user.id}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 70,
-                  backgroundColor: Colors.grey.shade200,
-                  backgroundImage: _selectedImage != null
-                      ? (kIsWeb
-                            ? NetworkImage(_selectedImage!.path)
-                            : FileImage(File(_selectedImage!.path))
-                                  as ImageProvider)
-                      : (hasCurrentAvatar
-                            ? NetworkImage(
-                                ApiConstants.getFullImageUrl(
-                                  widget.user.avatarUrl,
-                                ),
-                              )
-                            : null),
-                  child: (_selectedImage == null && !hasCurrentAvatar)
-                      ? const Icon(Icons.person, size: 56, color: Colors.grey)
-                      : null,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 460, maxHeight: maxDialogHeight),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.user.fullName ?? widget.user.email),
+              const SizedBox(height: 4),
+              SelectableText(
+                'ID: ${widget.user.id}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: avatarRadius,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: _selectedImage != null
+                        ? (kIsWeb
+                              ? NetworkImage(_selectedImage!.path)
+                              : FileImage(File(_selectedImage!.path))
+                                    as ImageProvider)
+                        : (hasCurrentAvatar
+                              ? NetworkImage(
+                                  ApiConstants.getFullImageUrl(
+                                    widget.user.avatarUrl,
+                                  ),
+                                )
+                              : null),
+                    child: (_selectedImage == null && !hasCurrentAvatar)
+                        ? const Icon(Icons.person, size: 56, color: Colors.grey)
+                        : null,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Chọn file'),
-                ),
-                const SizedBox(width: 12),
-                if (_selectedImage != null)
-                  Expanded(
-                    child: Text(
-                      _selectedImage!.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Chọn file'),
+                  ),
+                  if (_selectedImage != null)
+                    SizedBox(
+                      width: 220,
+                      child: Text(
+                        _selectedImage!.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -905,6 +914,7 @@ class _EditUserDialog extends StatefulWidget {
 
 class _EditUserDialogState extends State<_EditUserDialog> {
   final _formKey = GlobalKey<FormState>();
+  static const List<String> _roleOptions = ['User', 'Admin'];
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late bool _isActive;
@@ -918,7 +928,13 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     _nameCtrl = TextEditingController(text: widget.user.fullName ?? '');
     _phoneCtrl = TextEditingController(text: widget.user.phoneNumber ?? '');
     _isActive = widget.user.isActive;
-    _role = widget.user.role ?? 'User';
+    _role = _normalizeRole(widget.user.role);
+  }
+
+  String _normalizeRole(String? role) {
+    final value = role?.trim().toLowerCase() ?? '';
+    if (value == 'admin' || value == 'system') return 'Admin';
+    return 'User';
   }
 
   @override
@@ -1151,10 +1167,10 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                     filled: true,
                     fillColor: Colors.grey.shade50,
                   ),
-                  items: ['User', 'Admin']
+                  items: _roleOptions
                       .map((r) => DropdownMenuItem(value: r, child: Text(r)))
                       .toList(),
-                  onChanged: (v) => setState(() => _role = v ?? 'User'),
+                  onChanged: (v) => setState(() => _role = v ?? _roleOptions.first),
                 ),
                 const SizedBox(height: 16),
 

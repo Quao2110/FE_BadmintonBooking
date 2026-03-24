@@ -26,6 +26,21 @@ class CourtRepository implements ICourtRepository {
     return _dataSource.uploadImage(courtId: courtId, imageFile: imageFile);
   }
 
+  @override
+  Future<void> updateCourt({
+    required String courtId,
+    required String courtName,
+    String? description,
+    required String status,
+  }) {
+    return _dataSource.updateCourt(
+      courtId: courtId,
+      courtName: courtName,
+      description: description,
+      status: status,
+    );
+  }
+
   CourtEntity _mapToEntity(CourtResponseModel m) {
     return CourtEntity(
       id: m.id,

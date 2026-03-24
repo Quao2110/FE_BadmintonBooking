@@ -65,9 +65,43 @@ class CommerceApiService {
     return list.map((e) => OrderModel.fromJson(_toMap(e))).toList();
   }
 
+  Future<List<OrderModel>> getOrders({
+    String? userId,
+    String? orderStatus,
+    String? paymentStatus,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    final query = <String, dynamic>{
+      'page': page,
+      'pageSize': pageSize,
+      if (userId != null && userId.trim().isNotEmpty) 'userId': userId.trim(),
+      if (orderStatus != null && orderStatus.trim().isNotEmpty)
+        'orderStatus': orderStatus.trim(),
+      if (paymentStatus != null && paymentStatus.trim().isNotEmpty)
+        'paymentStatus': paymentStatus.trim(),
+    };
+
+    final payload = await _get(ApiConstants.orders, query: query);
+    final result = _extractResult(payload);
+    final list = _extractList(result);
+    return list.map((e) => OrderModel.fromJson(_toMap(e))).toList();
+  }
+
   Future<OrderModel> getOrderById(String orderId) async {
     final payload = await _get(ApiConstants.orderById(orderId));
     return OrderModel.fromJson(_toMap(_extractResult(payload)));
+  }
+
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String status,
+  }) async {
+    await _put(ApiConstants.orderUpdateStatus(orderId), {'newStatus': status});
+  }
+
+  Future<void> cancelOrder(String orderId) async {
+    await _post(ApiConstants.orderCancel(orderId), {});
   }
 
   Future<String> createVnPayLink({

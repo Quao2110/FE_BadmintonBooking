@@ -125,8 +125,17 @@ class ProductRemoteDataSource {
 
   Future<ApiResponse<void>> delete(String id) async {
     try {
-      final res = await dio.delete(ApiConstants.productById(id));
-      return ApiResponse.fromJson(res.data, (json) => null);
+      final productId = id.trim();
+      final res = await dio.delete(ApiConstants.productById(productId));
+      final parsed = ApiResponse.fromJson(res.data, (json) => null);
+      if (!parsed.isSuccess) {
+        throw ServerException(
+          message: parsed.message.isNotEmpty
+              ? parsed.message
+              : 'Không thể xoá sản phẩm.',
+        );
+      }
+      return parsed;
     } on DioException catch (e) {
       if (e.error is Exception) throw e.error!;
       throw ServerException(message: e.message ?? 'Lỗi xoá sản phẩm');

@@ -56,6 +56,30 @@ class CourtRemoteDataSource {
     }
   }
 
+  /// Cập nhật sân (theo API backend hiện tại dùng POST /api/Courts)
+  Future<void> updateCourt({
+    required String courtId,
+    required String courtName,
+    String? description,
+    required String status,
+  }) async {
+    try {
+      await dio.put(
+        ApiConstants.courtById(courtId),
+        data: {
+          'courtName': courtName,
+          'description': description,
+          'status': status,
+        },
+      );
+    } on DioException catch (e) {
+      if (e.error is Exception) throw e.error!;
+      throw ServerException(message: e.message ?? 'Lỗi cập nhật sân');
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
   Future<String> _toBase64DataUri(XFile file) async {
     final bytes = await file.readAsBytes();
     final base64 = base64Encode(bytes);

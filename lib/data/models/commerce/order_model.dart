@@ -30,19 +30,27 @@ class OrderItemModel {
 class OrderModel {
   final String id;
   final String status;
+  final String orderStatus;
   final String paymentStatus;
   final String paymentMethod;
   final double totalAmount;
   final DateTime? createdAt;
+  final String? customerName;
+  final String? customerEmail;
+  final String? deliveryAddress;
   final List<OrderItemModel> items;
 
   const OrderModel({
     required this.id,
     required this.status,
+    required this.orderStatus,
     required this.paymentStatus,
     required this.paymentMethod,
     required this.totalAmount,
     required this.createdAt,
+    this.customerName,
+    this.customerEmail,
+    this.deliveryAddress,
     required this.items,
   });
 
@@ -51,9 +59,13 @@ class OrderModel {
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     final rawItems =
         (json['orderDetails'] ?? json['items'] ?? <dynamic>[]) as List<dynamic>;
+    final user = _toMap(json['user']);
+    final resolvedStatus =
+        (json['status'] ?? json['orderStatus'] ?? 'Pending').toString();
     return OrderModel(
       id: (json['id'] ?? json['orderId'] ?? '').toString(),
-      status: (json['status'] ?? json['orderStatus'] ?? 'Pending').toString(),
+      status: resolvedStatus,
+      orderStatus: resolvedStatus,
       paymentStatus: (json['paymentStatus'] ?? 'Pending').toString(),
       paymentMethod: (json['paymentMethod'] ?? 'COD').toString(),
       totalAmount: _toDouble(json['totalAmount'] ?? json['total']),
@@ -62,6 +74,12 @@ class OrderModel {
               (json['createdAt'] ?? json['orderDate']).toString(),
             )
           : null,
+            customerName:
+              (json['userName'] ?? json['customerName'] ?? user['fullName'])
+                ?.toString(),
+            customerEmail:
+              (json['userEmail'] ?? json['email'] ?? user['email'])?.toString(),
+            deliveryAddress: (json['deliveryAddress'])?.toString(),
       items: rawItems
           .whereType<Map<String, dynamic>>()
           .map(OrderItemModel.fromJson)

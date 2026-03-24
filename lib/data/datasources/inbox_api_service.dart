@@ -27,19 +27,8 @@ class InboxRemoteDataSource {
   Future<List<InboxMessageModel>> getMyMessages() async {
     try {
       final res = await dio.get(ApiConstants.inboxMessages);
-      // Hứng dữ liệu linh hoạt: list hoặc nested result
-      final data = res.data;
-      List rawList;
-      if (data is List) {
-        rawList = data;
-      } else if (data is Map) {
-        rawList = data['result'] as List? ??
-            data['items'] as List? ??
-            data['data'] as List? ??
-            [];
-      } else {
-        rawList = [];
-      }
+      // Hứng dữ liệu linh hoạt: list, result/items/data/messages
+      final rawList = _extractList(res.data);
       return rawList
           .map((e) => InboxMessageModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -57,18 +46,7 @@ class InboxRemoteDataSource {
   Future<List<ChatRoomModel>> getAdminChatRooms() async {
     try {
       final res = await dio.get(ApiConstants.adminInboxRooms);
-      final data = res.data;
-      List rawList;
-      if (data is List) {
-        rawList = data;
-      } else if (data is Map) {
-        rawList = data['result'] as List? ??
-            data['items'] as List? ??
-            data['data'] as List? ??
-            [];
-      } else {
-        rawList = [];
-      }
+      final rawList = _extractList(res.data);
       return rawList
           .map((e) => ChatRoomModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -91,4 +69,23 @@ class InboxRemoteDataSource {
       throw ServerException(message: e.toString());
     }
   }
+
+  List<dynamic> _extractList(dynamic data) {
+    if (data is List) return data;
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      final candidates = [
+        map['rooms'],
+        map['result'],
+        map['items'],
+        map['data'],
+        map['messages'],
+      ];
+      for (final c in candidates) {
+        if (c is List) return c;
+      }
+    }
+    return const <dynamic>[];
+  }
+
 }

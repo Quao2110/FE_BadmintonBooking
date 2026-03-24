@@ -124,13 +124,18 @@ class _DashboardBodyState extends State<_DashboardBody> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final isMobile = constraints.maxWidth < 600;
+                    final isLandscape =
+                        MediaQuery.of(context).orientation ==
+                        Orientation.landscape;
                     return GridView.count(
                       crossAxisCount: isMobile ? 2 : 4,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: isMobile ? 1.4 : 1.5,
+                      childAspectRatio: isMobile
+                          ? (isLandscape ? 2.2 : 1.4)
+                          : 1.5,
                       children: [
                         _StatCard(icon: Icons.people_rounded, title: 'Users', value: '--', color: Colors.blue, onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.admin, arguments: widget.user)),
                         _StatCard(icon: Icons.sports_tennis_rounded, title: 'Sân', value: '--', color: Colors.green, onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.adminCourts, arguments: widget.user)),
@@ -169,13 +174,15 @@ class _StatsCards extends StatelessWidget {
 
     return LayoutBuilder(builder: (context, constraints) {
       final isMobile = constraints.maxWidth < 600;
+      final isLandscape =
+          MediaQuery.of(context).orientation == Orientation.landscape;
       return GridView.count(
         crossAxisCount: isMobile ? 2 : 4,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: isMobile ? 1.2 : 1.4,
+        childAspectRatio: isMobile ? (isLandscape ? 2.2 : 1.2) : 1.4,
         children: [
           _StatCard(
             icon: Icons.attach_money_rounded,
@@ -553,30 +560,35 @@ class _ErrorBanner extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 26),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: smallText ? 13 : 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: smallText ? 13 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
                 ],
               ),
-            // ),
+            ),
           ],
         ),
       ),
