@@ -16,12 +16,35 @@ class ShopResponseModel {
   });
 
   factory ShopResponseModel.fromJson(Map<String, dynamic> json) {
+    String pickString(List<String> keys, {String fallback = ''}) {
+      for (final key in keys) {
+        final value = json[key];
+        if (value == null) continue;
+        final text = value.toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+      return fallback;
+    }
+
+    double? pickDouble(List<String> keys) {
+      for (final key in keys) {
+        final value = json[key];
+        if (value == null) continue;
+        if (value is num) return value.toDouble();
+        if (value is String) {
+          final parsed = double.tryParse(value.trim());
+          if (parsed != null) return parsed;
+        }
+      }
+      return null;
+    }
+
     return ShopResponseModel(
-      id: json['id'] ?? '',
-      shopName: json['shopName'] ?? '',
-      address: json['address'] ?? '',
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      id: pickString(['id', 'Id']),
+      shopName: pickString(['shopName', 'ShopName', 'name', 'Name']),
+      address: pickString(['address', 'Address']),
+      latitude: pickDouble(['latitude', 'Latitude', 'lat', 'Lat']),
+      longitude: pickDouble(['longitude', 'Longitude', 'lng', 'Lng', 'lon', 'Lon']),
     );
   }
 
