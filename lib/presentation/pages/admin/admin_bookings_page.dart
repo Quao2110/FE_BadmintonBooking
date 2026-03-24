@@ -43,7 +43,10 @@ class _AdminBookingsBodyState extends State<_AdminBookingsBody> {
   bool _isUpdating = false;
 
   Future<void> _updateStatus(
-      BuildContext context, BookingEntity booking, String status) async {
+    BuildContext context,
+    BookingEntity booking,
+    String status,
+  ) async {
     setState(() => _isUpdating = true);
     try {
       final svc = BookingRemoteDataSource();
@@ -56,13 +59,52 @@ class _AdminBookingsBodyState extends State<_AdminBookingsBody> {
           ),
         );
         // Reload list
-        context.read<BookingBloc>().add(LoadMyHistoryEvent(status: _statusFilter));
+        context.read<BookingBloc>().add(
+          LoadMyHistoryEvent(status: _statusFilter),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi: ${e.toString().replaceFirst('Exception: ', '')}'),
+            content: Text(
+              'Lỗi: ${e.toString().replaceFirst('Exception: ', '')}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _cancelBooking(
+    BuildContext context,
+    BookingEntity booking,
+  ) async {
+    setState(() => _isUpdating = true);
+    try {
+      final svc = BookingRemoteDataSource();
+      await svc.cancelBooking(booking.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã hủy booking thành công'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.read<BookingBloc>().add(
+          LoadMyHistoryEvent(status: _statusFilter),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lỗi: ${e.toString().replaceFirst('Exception: ', '')}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -108,22 +150,28 @@ class _AdminBookingsBodyState extends State<_AdminBookingsBody> {
                 color: Colors.orange,
                 onTap: () {
                   setState(() => _statusFilter = 'Pending');
-                  context.read<BookingBloc>().add(const LoadMyHistoryEvent(status: 'Pending'));
+                  context.read<BookingBloc>().add(
+                    const LoadMyHistoryEvent(status: 'Pending'),
+                  );
                 },
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: 'Approved',
-                selected: _statusFilter == 'Approved',
+                label: 'Confirmed',
+                selected: _statusFilter == 'Confirmed',
                 color: Colors.green,
                 onTap: () {
-                  setState(() => _statusFilter = 'Approved');
-                  context.read<BookingBloc>().add(const LoadMyHistoryEvent(status: 'Approved'));
+                  setState(() => _statusFilter = 'Confirmed');
+                  context.read<BookingBloc>().add(
+                    const LoadMyHistoryEvent(status: 'Confirmed'),
+                  );
                 },
               ),
               const SizedBox(width: 12),
               ElevatedButton.icon(
-                onPressed: () => context.read<BookingBloc>().add(LoadMyHistoryEvent(status: _statusFilter)),
+                onPressed: () => context.read<BookingBloc>().add(
+                  LoadMyHistoryEvent(status: _statusFilter),
+                ),
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Làm mới'),
                 style: ElevatedButton.styleFrom(
@@ -147,12 +195,21 @@ class _AdminBookingsBodyState extends State<_AdminBookingsBody> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 12),
-                        Text(state.message, style: const TextStyle(color: Colors.red)),
+                        Text(
+                          state.message,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                         const SizedBox(height: 12),
                         ElevatedButton(
-                          onPressed: () => context.read<BookingBloc>().add(LoadMyHistoryEvent(status: _statusFilter)),
+                          onPressed: () => context.read<BookingBloc>().add(
+                            LoadMyHistoryEvent(status: _statusFilter),
+                          ),
                           child: const Text('Thử lại'),
                         ),
                       ],
@@ -165,9 +222,16 @@ class _AdminBookingsBodyState extends State<_AdminBookingsBody> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.calendar_today_outlined, size: 64, color: Colors.grey),
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 12),
-                          Text('Không có đặt sân nào', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                          Text(
+                            'Không có đặt sân nào',
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
                         ],
                       ),
                     );
@@ -186,8 +250,9 @@ class _AdminBookingsBodyState extends State<_AdminBookingsBody> {
                         return _BookingTile(
                           booking: booking,
                           isUpdating: _isUpdating,
-                          onApprove: () => _updateStatus(context, booking, 'Approved'),
-                          onReject: () => _updateStatus(context, booking, 'Rejected'),
+                          onApprove: () =>
+                              _updateStatus(context, booking, 'Confirmed'),
+                          onCancel: () => _cancelBooking(context, booking),
                         );
                       },
                     ),
@@ -227,11 +292,11 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? activeColor.withValues(alpha: 0.15) : Colors.transparent,
+          color: selected
+              ? activeColor.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? activeColor : AppColors.border,
-          ),
+          border: Border.all(color: selected ? activeColor : AppColors.border),
         ),
         child: Text(
           label,
@@ -250,22 +315,29 @@ class _BookingTile extends StatelessWidget {
   final BookingEntity booking;
   final bool isUpdating;
   final VoidCallback onApprove;
-  final VoidCallback onReject;
+  final VoidCallback onCancel;
 
   const _BookingTile({
     required this.booking,
     required this.isUpdating,
     required this.onApprove,
-    required this.onReject,
+    required this.onCancel,
   });
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return Colors.orange;
-      case 'approved': return Colors.green;
-      case 'rejected': return Colors.red;
-      case 'cancelled': return Colors.grey;
-      default: return Colors.blue;
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+        return Colors.green;
+      case 'approved':
+        return Colors.green;
+      case 'completed':
+        return Colors.teal;
+      case 'cancelled':
+        return Colors.grey;
+      default:
+        return Colors.blue;
     }
   }
 
@@ -284,7 +356,10 @@ class _BookingTile extends StatelessWidget {
           color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.calendar_month_rounded, color: AppColors.primary),
+        child: const Icon(
+          Icons.calendar_month_rounded,
+          color: AppColors.primary,
+        ),
       ),
       title: Text(
         booking.courtName,
@@ -294,15 +369,25 @@ class _BookingTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 4),
-          Text('${fmt.format(booking.startTime)} → ${DateFormat('HH:mm').format(booking.endTime)}'),
+          Text(
+            '${fmt.format(booking.startTime)} → ${DateFormat('HH:mm').format(booking.endTime)}',
+          ),
           const SizedBox(height: 2),
           Text(
             'Tổng tiền: ${moneyFmt.format(booking.totalPrice.toInt())}₫',
-            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           if (booking.services.isNotEmpty)
-            Text('Dịch vụ: ${booking.services.map((s) => s.serviceName).join(', ')}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            Text(
+              'Dịch vụ: ${booking.services.map((s) => s.serviceName).join(', ')}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
         ],
       ),
       trailing: Row(
@@ -328,21 +413,30 @@ class _BookingTile extends StatelessWidget {
           if (isPending && !isUpdating) ...[
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
+              icon: const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.green,
+                size: 28,
+              ),
               tooltip: 'Approve',
               onPressed: onApprove,
             ),
             IconButton(
-              icon: const Icon(Icons.cancel_rounded, color: Colors.red, size: 28),
-              tooltip: 'Reject',
-              onPressed: onReject,
+              icon: const Icon(
+                Icons.cancel_rounded,
+                color: Colors.red,
+                size: 28,
+              ),
+              tooltip: 'Cancel',
+              onPressed: onCancel,
             ),
           ] else if (isUpdating && isPending) ...[
             const SizedBox(width: 12),
             const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2)),
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ],
         ],
       ),
