@@ -221,6 +221,8 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
                           .map(
                             (court) => _CourtCard(
                               court: court,
+                              onEdit: () =>
+                                  _showEditCourtDialog(context, court),
                               onUploadImage: () =>
                                   _showUploadImageDialog(context, court),
                             ),
@@ -304,6 +306,19 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.edit_outlined,
+                                              size: 20,
+                                            ),
+                                            color: Colors.orange,
+                                            tooltip: 'Chỉnh sửa',
+                                            onPressed: () =>
+                                                _showEditCourtDialog(
+                                                  context,
+                                                  court,
+                                                ),
+                                          ),
                                           IconButton(
                                             icon: const Icon(
                                               Icons
@@ -486,6 +501,16 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
       ),
     );
   }
+
+  void _showEditCourtDialog(BuildContext context, CourtEntity court) {
+    showDialog(
+      context: context,
+      builder: (_) => BlocProvider.value(
+        value: context.read<CourtBloc>(),
+        child: _EditCourtDialog(court: court),
+      ),
+    );
+  }
 }
 
 class _StatChip extends StatelessWidget {
@@ -535,9 +560,14 @@ class _StatChip extends StatelessWidget {
 
 class _CourtCard extends StatelessWidget {
   final CourtEntity court;
+  final VoidCallback onEdit;
   final VoidCallback onUploadImage;
 
-  const _CourtCard({required this.court, required this.onUploadImage});
+  const _CourtCard({
+    required this.court,
+    required this.onEdit,
+    required this.onUploadImage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -608,31 +638,42 @@ class _CourtCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: onUploadImage,
-                  icon: const Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 18,
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                alignment: WrapAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Sửa'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.orange),
                   ),
-                  label: const Text('Thêm ảnh'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.teal),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.courtDetail,
-                      arguments: court.id,
-                    );
-                  },
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                  label: const Text('Xem chi tiết'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.blue),
-                ),
-              ],
+                  TextButton.icon(
+                    onPressed: onUploadImage,
+                    icon: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 18,
+                    ),
+                    label: const Text('Thêm ảnh'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.teal),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.courtDetail,
+                        arguments: court.id,
+                      );
+                    },
+                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                    label: const Text('Xem chi tiết'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -699,6 +740,140 @@ class _SmartCourtImage extends StatelessWidget {
   }
 }
 
+class _EditCourtDialog extends StatefulWidget {
+  final CourtEntity court;
+  const _EditCourtDialog({required this.court});
+
+  @override
+  State<_EditCourtDialog> createState() => _EditCourtDialogState();
+}
+
+class _EditCourtDialogState extends State<_EditCourtDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _descriptionCtrl;
+  static const List<String> _statusOptions = [
+    'Active',
+    'Available',
+    'Maintenance',
+    'Inactive',
+  ];
+  late String _status;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.court.courtName);
+    _descriptionCtrl = TextEditingController(text: widget.court.description ?? '');
+    _status = _normalizeStatus(widget.court.status);
+  }
+
+  String _normalizeStatus(String raw) {
+    final value = raw.trim().toLowerCase();
+    for (final option in _statusOptions) {
+      if (option.toLowerCase() == value) return option;
+    }
+    return 'Active';
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _descriptionCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+
+    context.read<CourtBloc>().add(
+      UpdateCourt(
+        courtId: widget.court.id,
+        courtName: _nameCtrl.text.trim(),
+        description: _descriptionCtrl.text.trim().isEmpty
+            ? null
+            : _descriptionCtrl.text.trim(),
+        status: _status,
+      ),
+    );
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isLandscape = media.orientation == Orientation.landscape;
+    final maxDialogHeight = media.size.height * (isLandscape ? 0.72 : 0.62);
+
+    return AlertDialog(
+      title: const Text('Chỉnh sửa sân'),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 460, maxHeight: maxDialogHeight),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Tên sân *',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  validator: (v) {
+                    final text = (v ?? '').trim();
+                    if (text.isEmpty) return 'Vui lòng nhập tên sân';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descriptionCtrl,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Mô tả',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _status,
+                  decoration: InputDecoration(
+                    labelText: 'Trạng thái',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: _statusOptions
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _status = v ?? 'Active'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: const Text('Lưu'),
+        ),
+      ],
+    );
+  }
+}
+
 class _UploadCourtImageDialog extends StatefulWidget {
   final CourtEntity court;
   const _UploadCourtImageDialog({required this.court});
@@ -750,82 +925,92 @@ class _UploadCourtImageDialogState extends State<_UploadCourtImageDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isLandscape = media.orientation == Orientation.landscape;
+    final maxDialogHeight = media.size.height * (isLandscape ? 0.82 : 0.72);
+    final previewHeight = isLandscape ? 130.0 : 220.0;
+
     return AlertDialog(
       title: const Text('Tải ảnh sân'),
-      content: SizedBox(
-        width: 500,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Sân: ${widget.court.courtName}'),
-            const SizedBox(height: 4),
-            SelectableText(
-              'ID: ${widget.court.id}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 220,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                  color: Colors.grey.shade50,
-                ),
-                child: _selectedImage == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 48,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text('Chọn ảnh để xem trước'),
-                        ],
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: kIsWeb
-                            ? Image.network(
-                                _selectedImage!.path,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.file(
-                                File(_selectedImage!.path),
-                                fit: BoxFit.cover,
-                              ),
-                      ),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 500, maxHeight: maxDialogHeight),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Sân: ${widget.court.courtName}'),
+              const SizedBox(height: 4),
+              SelectableText(
+                'ID: ${widget.court.id}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Chọn file'),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: previewHeight,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: _selectedImage == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 48,
+                              color: Colors.grey.shade500,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text('Chọn ảnh để xem trước'),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: kIsWeb
+                              ? Image.network(
+                                  _selectedImage!.path,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(_selectedImage!.path),
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
                 ),
-                const SizedBox(width: 12),
-                if (_selectedImage != null)
-                  Expanded(
-                    child: Text(
-                      _selectedImage!.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Chọn file'),
+                  ),
+                  if (_selectedImage != null)
+                    SizedBox(
+                      width: 220,
+                      child: Text(
+                        _selectedImage!.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
