@@ -631,12 +631,14 @@ class _SlotsGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final slot = slots[index];
         final isSelected = selectedIndices.contains(index);
-        final isAvailable = slot.isAvailable;
+        final isPast = !slot.startTime.isAfter(DateTime.now());
+        final isAvailable = slot.isAvailable && !isPast;
 
         return _SlotChip(
           timeLabel: slot.timeLabel,
           isSelected: isSelected,
           isAvailable: isAvailable,
+          isPast: isPast,
           onTap: () => onSlotTap(index),
         );
       },
@@ -648,12 +650,14 @@ class _SlotChip extends StatelessWidget {
   final String timeLabel;
   final bool isSelected;
   final bool isAvailable;
+  final bool isPast;
   final VoidCallback onTap;
 
   const _SlotChip({
     required this.timeLabel,
     required this.isSelected,
     required this.isAvailable,
+    required this.isPast,
     required this.onTap,
   });
 
@@ -678,7 +682,11 @@ class _SlotChip extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: isAvailable ? onTap : null,
+      onTap: isPast
+          ? () => AppNotification.showError(
+                'Không thể chọn khung giờ trong quá khứ.',
+              )
+          : (isAvailable ? onTap : null),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
@@ -932,6 +940,13 @@ class _BottomBookingBar extends StatelessWidget {
     final endTime = state.selectedEndTime;
 
     if (selectedCourt == null || startTime == null || endTime == null) {
+      return;
+    }
+
+    if (!startTime.isAfter(DateTime.now())) {
+      AppNotification.showError(
+        'Không thể đặt sân ở thời điểm trong quá khứ. Vui lòng chọn ngày hoặc giờ khác.',
+      );
       return;
     }
 

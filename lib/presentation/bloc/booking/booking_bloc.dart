@@ -122,6 +122,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     final slot = currentState.availability!.slots[event.slotIndex];
     if (!slot.isAvailable) return;
+    if (!slot.startTime.isAfter(DateTime.now())) return;
 
     final newSelection = Set<int>.from(currentState.selectedSlotIndices);
     if (newSelection.contains(event.slotIndex)) {
