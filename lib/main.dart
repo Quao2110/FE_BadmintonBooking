@@ -1,6 +1,8 @@
 ﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
@@ -22,6 +24,8 @@ class MyHttpOverrides extends HttpOverrides {
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi_VN');
+  Intl.defaultLocale = 'vi_VN';
   await NotificationService.instance.init();
   runApp(const MyApp());
 }

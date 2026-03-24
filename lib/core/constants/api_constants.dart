@@ -95,9 +95,12 @@ class ApiConstants {
   static const String cartClear = '/api/cart/clear';
 
   // Order endpoints
+  static const String orders = '/api/orders';
   static const String orderCheckout = '/api/orders/checkout';
   static const String orderMyOrders = '/api/orders/my-orders';
   static String orderById(String id) => '/api/orders/$id';
+  static String orderUpdateStatus(String id) => '/api/orders/$id/status';
+  static String orderCancel(String id) => '/api/orders/$id/cancel';
 
   // Payment endpoints
   static const String paymentCreateVnpayLink =
