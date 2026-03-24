@@ -93,6 +93,27 @@ class CommerceApiService {
     return url;
   }
 
+  Future<String> createVnPayBookingLink({
+    required String bookingId,
+    required int amountVnd,
+    required String orderInfo,
+  }) async {
+    final payload = await _post(ApiConstants.paymentCreateVnpayBookingLink, {
+      'txnRef': bookingId,
+      'amountVnd': amountVnd,
+      'orderInfo': orderInfo,
+    });
+
+    final result = _toMap(_extractResult(payload));
+    final url =
+        (result['paymentUrl'] ?? result['url'] ?? result['payUrl'] ?? '')
+            .toString();
+    if (url.isEmpty) {
+      throw ServerException(message: 'Khong lay duoc payment url tu he thong.');
+    }
+    return url;
+  }
+
   Future<bool> confirmVnPayReturn(Map<String, String> queryParams) async {
     final payload = await _get(
       ApiConstants.paymentVnpayReturn,
