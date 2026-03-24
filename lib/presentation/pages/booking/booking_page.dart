@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/colors.dart';
+import '../../../data/datasources/commerce_api_service.dart';
 import '../../../data/models/booking/booking_create_request.dart';
 import '../../../domain/entities/court_entity.dart';
 import '../../../shared/widgets/app_notification.dart';
@@ -12,6 +13,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../bloc/shop/shop_bloc.dart';
 import '../../bloc/shop/shop_event.dart';
 import '../../bloc/shop/shop_state.dart';
+import '../commerce/vnpay_webview_page.dart';
 import 'booking_success_page.dart';
 
 class BookingPage extends StatefulWidget {
@@ -58,8 +60,62 @@ class _BookingPageState extends State<BookingPage> {
   }
 }
 
-class _BookingView extends StatelessWidget {
+class _BookingView extends StatefulWidget {
   const _BookingView();
+
+  @override
+  State<_BookingView> createState() => _BookingViewState();
+}
+
+class _BookingViewState extends State<_BookingView> {
+  String _paymentMethod = 'COD';
+
+  Future<void> _startVnpay(BuildContext context, booking) async {
+    try {
+      final commerce = CommerceApiService();
+      final url = await commerce.createVnPayBookingLink(
+        bookingId: booking.id,
+        amountVnd: booking.totalPrice.round(),
+        orderInfo: 'Thanh toan dat san ${booking.id}',
+      );
+
+      if (!mounted) return;
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(builder: (_) => VnpayWebviewPage(paymentUrl: url)),
+      );
+
+      if (!mounted) return;
+      final success = result == true;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(success ? 'Thanh toán thành công' : 'Thanh toán chưa hoàn tất'),
+          content: Text(
+            success
+                ? 'VNPAY đã xác nhận thanh toán thành công.'
+                : 'Thanh toán chưa được xác nhận. Vui lòng kiểm tra lại lịch sử đặt sân.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      AppNotification.showError(
+        'Không thể khởi tạo thanh toán: ${e.toString().replaceFirst('Exception: ', '')}',
+      );
+    }
+
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => BookingSuccessPage(booking: booking)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,13 +130,16 @@ class _BookingView extends StatelessWidget {
       body: BlocConsumer<BookingBloc, BookingState>(
         listener: (context, state) {
           if (state is BookingCreated) {
-            // Navigate to success page
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => BookingSuccessPage(booking: state.booking),
-              ),
-            );
+            if (_paymentMethod == 'VNPAY') {
+              _startVnpay(context, state.booking);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BookingSuccessPage(booking: state.booking),
+                ),
+              );
+            }
           }
           if (state is BookingDataLoaded && state.error != null) {
             AppNotification.showError(state.error!);
@@ -104,7 +163,11 @@ class _BookingView extends StatelessWidget {
           }
 
           if (state is BookingDataLoaded) {
-            return _BookingContent(state: state);
+            return _BookingContent(
+              state: state,
+              paymentMethod: _paymentMethod,
+              onPaymentMethodChanged: (method) => setState(() => _paymentMethod = method),
+            );
           }
 
           return const SizedBox.shrink();
@@ -116,7 +179,14 @@ class _BookingView extends StatelessWidget {
 
 class _BookingContent extends StatelessWidget {
   final BookingDataLoaded state;
-  const _BookingContent({required this.state});
+  final String paymentMethod;
+  final ValueChanged<String> onPaymentMethodChanged;
+
+  const _BookingContent({
+    required this.state,
+    required this.paymentMethod,
+    required this.onPaymentMethodChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +234,11 @@ class _BookingContent extends StatelessWidget {
         ),
 
         // Bottom Price & Book Button
-        _BottomBookingBar(state: state),
+        _BottomBookingBar(
+          state: state,
+          paymentMethod: paymentMethod,
+          onPaymentMethodChanged: onPaymentMethodChanged,
+        ),
       ],
     );
   }
@@ -854,8 +928,14 @@ class _CircleButton extends StatelessWidget {
 
 class _BottomBookingBar extends StatelessWidget {
   final BookingDataLoaded state;
+  final String paymentMethod;
+  final ValueChanged<String> onPaymentMethodChanged;
 
-  const _BottomBookingBar({required this.state});
+  const _BottomBookingBar({
+    required this.state,
+    required this.paymentMethod,
+    required this.onPaymentMethodChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -922,9 +1002,9 @@ class _BottomBookingBar extends StatelessWidget {
                         height: 24,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
-                    : const Text(
-                        'Đặt sân',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    : Text(
+                        paymentMethod == 'VNPAY' ? 'Thanh toán VNPAY' : 'Đặt sân',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ),
@@ -960,7 +1040,9 @@ class _BottomBookingBar extends StatelessWidget {
         endTime: endTime,
         totalPrice: state.totalPrice,
         slotCount: state.selectedSlotIndices.length,
-        onConfirm: () {
+        initialPaymentMethod: paymentMethod,
+        onConfirm: (selectedPaymentMethod) {
+          onPaymentMethodChanged(selectedPaymentMethod);
           Navigator.of(dialogContext).pop();
           _submitBooking(context, selectedCourt.id, startTime, endTime);
         },
@@ -992,14 +1074,15 @@ class _BottomBookingBar extends StatelessWidget {
 }
 
 /// Hộp thoại xác nhận đặt sân
-class _BookingConfirmDialog extends StatelessWidget {
+class _BookingConfirmDialog extends StatefulWidget {
   final String courtName;
   final DateTime date;
   final DateTime startTime;
   final DateTime endTime;
   final double totalPrice;
   final int slotCount;
-  final VoidCallback onConfirm;
+  final String initialPaymentMethod;
+  final void Function(String paymentMethod) onConfirm;
 
   const _BookingConfirmDialog({
     required this.courtName,
@@ -1008,158 +1091,229 @@ class _BookingConfirmDialog extends StatelessWidget {
     required this.endTime,
     required this.totalPrice,
     required this.slotCount,
+    required this.initialPaymentMethod,
     required this.onConfirm,
   });
+
+  @override
+  State<_BookingConfirmDialog> createState() => _BookingConfirmDialogState();
+}
+
+class _BookingConfirmDialogState extends State<_BookingConfirmDialog> {
+  late String _paymentMethod;
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentMethod = widget.initialPaymentMethod;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: AppColors.surface,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.sports_tennis,
+                  size: 32,
+                  color: AppColors.primary,
+                ),
               ),
-              child: const Icon(
-                Icons.sports_tennis,
-                size: 32,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Title
-            const Text(
-              'Xác nhận đặt sân',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+              // Title
+              const Text(
+                'Xác nhận đặt sân',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Details Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
+              // Details Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    _DetailRow(
+                      icon: Icons.sports_tennis,
+                      label: 'Sân',
+                      value: widget.courtName,
+                    ),
+                    const SizedBox(height: 12),
+                    _DetailRow(
+                      icon: Icons.calendar_today,
+                      label: 'Ngày',
+                      value: _formatDate(widget.date),
+                    ),
+                    const SizedBox(height: 12),
+                    _DetailRow(
+                      icon: Icons.access_time,
+                      label: 'Giờ',
+                      value: _formatTimeRange(widget.startTime, widget.endTime),
+                    ),
+                    const SizedBox(height: 12),
+                    _DetailRow(
+                      icon: Icons.timer,
+                      label: 'Số slot',
+                      value: '${widget.slotCount} slot(s)',
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
+              const SizedBox(height: 12),
+
+              // Total Price
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Tổng tiền',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${_formatPrice(widget.totalPrice)}đ',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Payment Method Selection
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.payment, size: 18, color: AppColors.primary),
+                          SizedBox(width: 8),
+                          Text(
+                            'Phương thức thanh toán',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    RadioListTile<String>(
+                      value: 'COD',
+                      groupValue: _paymentMethod,
+                      title: const Text(
+                        'Thanh toán tại sân',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      activeColor: AppColors.primary,
+                      dense: true,
+                      onChanged: (value) => setState(() => _paymentMethod = value ?? 'COD'),
+                    ),
+                    RadioListTile<String>(
+                      value: 'VNPAY',
+                      groupValue: _paymentMethod,
+                      title: const Text(
+                        'Thanh toán trước qua VNPAY',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      activeColor: AppColors.primary,
+                      dense: true,
+                      onChanged: (value) => setState(() => _paymentMethod = value ?? 'VNPAY'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Buttons
+              Row(
                 children: [
-                  _DetailRow(
-                    icon: Icons.sports_tennis,
-                    label: 'Sân',
-                    value: courtName,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: const BorderSide(color: AppColors.border),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  _DetailRow(
-                    icon: Icons.calendar_today,
-                    label: 'Ngày',
-                    value: _formatDate(date),
-                  ),
-                  const SizedBox(height: 12),
-                  _DetailRow(
-                    icon: Icons.access_time,
-                    label: 'Giờ',
-                    value: _formatTimeRange(startTime, endTime),
-                  ),
-                  const SizedBox(height: 12),
-                  _DetailRow(
-                    icon: Icons.timer,
-                    label: 'Số slot',
-                    value: '$slotCount slot(s)',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => widget.onConfirm(_paymentMethod),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.background,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Text(
+                        _paymentMethod == 'VNPAY' ? 'Thanh toán' : 'Xác nhận',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Total Price
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Tổng tiền',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '${_formatPrice(totalPrice)}đ',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textSecondary,
-                      side: const BorderSide(color: AppColors.border),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Hủy',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onConfirm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.background,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: const Text(
-                      'Xác nhận',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
