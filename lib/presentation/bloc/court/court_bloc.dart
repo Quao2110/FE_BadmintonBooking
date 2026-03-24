@@ -11,6 +11,7 @@ class CourtBloc extends Bloc<CourtEvent, CourtState> {
     on<LoadAllCourts>(_onLoadAllCourts);
     on<LoadCourtById>(_onLoadCourtById);
     on<UploadCourtImage>(_onUploadCourtImage);
+    on<UpdateCourt>(_onUpdateCourt);
   }
 
   factory CourtBloc.create() {
@@ -51,6 +52,24 @@ class CourtBloc extends Bloc<CourtEvent, CourtState> {
     try {
       await repository.uploadImage(event.courtId, event.imageFile);
       emit(const CourtActionSuccess('Tải ảnh sân thành công!'));
+    } catch (e) {
+      emit(CourtError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onUpdateCourt(
+    UpdateCourt event,
+    Emitter<CourtState> emit,
+  ) async {
+    emit(const CourtLoading());
+    try {
+      await repository.updateCourt(
+        courtId: event.courtId,
+        courtName: event.courtName,
+        description: event.description,
+        status: event.status,
+      );
+      emit(const CourtActionSuccess('Cập nhật sân thành công!'));
     } catch (e) {
       emit(CourtError(e.toString().replaceFirst('Exception: ', '')));
     }

@@ -312,7 +312,11 @@ class HomeScreen extends StatelessWidget {
                           onTap: () {
                             // Kiểm tra quyền trước khi cho phép truy cập
                             if (AppRouter.checkAdminAccess(currentUser)) {
-                              Navigator.pushNamed(context, AppRoutes.admin);
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.admin,
+                                arguments: currentUser,
+                              );
                             } else {
                               Navigator.pushNamed(context, AppRoutes.forbidden);
                             }

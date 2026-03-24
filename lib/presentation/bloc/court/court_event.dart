@@ -27,3 +27,20 @@ class UploadCourtImage extends CourtEvent {
   @override
   List<Object?> get props => [courtId, imageFile.path];
 }
+
+class UpdateCourt extends CourtEvent {
+  final String courtId;
+  final String courtName;
+  final String? description;
+  final String status;
+
+  const UpdateCourt({
+    required this.courtId,
+    required this.courtName,
+    this.description,
+    required this.status,
+  });
+
+  @override
+  List<Object?> get props => [courtId, courtName, description, status];
+}
