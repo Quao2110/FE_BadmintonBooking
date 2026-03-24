@@ -37,6 +37,13 @@ class HomeScreen extends StatelessWidget {
 
           return Scaffold(
             backgroundColor: boneColor,
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.aiChat),
+              icon: const Icon(Icons.smart_toy_outlined),
+              label: const Text('Hỏi AI'),
+              backgroundColor: kombuGreen,
+              foregroundColor: Colors.white,
+            ),
             body: CustomScrollView(
               slivers: [
                 // ── Modern AppBar ─────────────────────────────────────────────

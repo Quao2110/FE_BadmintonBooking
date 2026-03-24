@@ -22,6 +22,10 @@ import '../presentation/pages/court/court_list_page.dart';
 import '../presentation/pages/court/court_detail_page.dart';
 import '../presentation/pages/error/not_found_page.dart';
 import '../presentation/pages/error/forbidden_page.dart';
+import '../presentation/pages/support/ai_chat_page.dart';
+import '../presentation/bloc/ai_chat/ai_chat_bloc.dart';
+import '../presentation/bloc/ai_chat/ai_chat_event.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Tên các route trong app
 class AppRoutes {
@@ -46,6 +50,7 @@ class AppRoutes {
   static const String bookingHistory = '/booking/history';
   static const String courtList = '/courts';
   static const String courtDetail = '/court-detail';
+  static const String aiChat = '/support/ai-chat';
   static const String notFound = '/404';
   static const String forbidden = '/403';
 }
@@ -175,6 +180,14 @@ class AppRouter {
         final courtId = settings.arguments as String?;
         if (courtId == null) return _slide(const CourtListPage());
         return _slide(CourtDetailPage(courtId: courtId));
+
+      case AppRoutes.aiChat:
+        return _slide(
+          BlocProvider(
+            create: (_) => AiChatBloc()..add(LoadAiContextEvent()),
+            child: const AiChatPage(),
+          ),
+        );
 
       case AppRoutes.notFound:
         return _slide(const NotFoundPage());
