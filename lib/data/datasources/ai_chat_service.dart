@@ -13,12 +13,8 @@ class AiChatService {
   String _modelName = '';
   Future<void>? _modelReady;
 
-  static const _fallbackKey = 'AIzaSyB9EuAwBsU6IYIMqZVSrgSUryyTTiwapjk';
-
   AiChatService() {
-    _apiKey = ApiConstants.geminiApiKey.isNotEmpty
-        ? ApiConstants.geminiApiKey
-        : _fallbackKey;
+    _apiKey = ApiConstants.geminiApiKey;
     _useGemini = _apiKey.isNotEmpty;
     debugPrint('[AI Chat] Mode: ${_useGemini ? "Gemini API" : "Offline"}');
     if (_useGemini) _modelReady = _findModel();
