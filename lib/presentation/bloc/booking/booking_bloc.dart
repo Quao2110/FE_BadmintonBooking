@@ -19,6 +19,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.serviceRepository,
   }) : super(const BookingInitial()) {
     on<LoadCourtsEvent>(_onLoadCourts);
+    on<ChangeDateEvent>(_onChangeDate);
     on<LoadAvailabilityEvent>(_onLoadAvailability);
     on<SelectSlotEvent>(_onSelectSlot);
     on<ClearSlotsEvent>(_onClearSlots);
@@ -44,14 +45,37 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       // Lọc chỉ lấy sân active
       final activeCourts = courts.where((c) => c.status.toLowerCase() == 'active').toList();
       final services = await serviceRepository.getAll();
+      final now = DateTime.now();
 
       emit(BookingDataLoaded(
         courts: activeCourts,
-        selectedDate: DateTime.now(),
+        selectedDate: DateTime(now.year, now.month, now.day),
         services: services.where((s) => s.isActive).toList(),
       ));
     } catch (e) {
       emit(BookingError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onChangeDate(ChangeDateEvent event, Emitter<BookingState> emit) async {
+    final currentState = state;
+    if (currentState is! BookingDataLoaded) return;
+
+    final normalizedDate = DateTime(event.date.year, event.date.month, event.date.day);
+
+    emit(currentState.copyWith(
+      selectedDate: normalizedDate,
+      selectedSlotIndices: {},
+      clearAvailability: true,
+      clearError: true,
+    ));
+
+    final selectedCourt = currentState.selectedCourt;
+    if (selectedCourt != null) {
+      add(LoadAvailabilityEvent(
+        courtId: selectedCourt.id,
+        date: normalizedDate,
+      ));
     }
   }
 
