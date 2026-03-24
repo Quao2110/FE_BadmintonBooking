@@ -126,4 +126,7 @@ class ApiConstants {
   // Timeout (milliseconds)
   static const int connectTimeout = 30000;
   static const int receiveTimeout = 30000;
+
+  // AI Chat
+  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
 }
