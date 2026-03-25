@@ -1273,8 +1273,12 @@ class _CreateProductDialogState extends State<_CreateProductDialog> {
       child: BlocBuilder<CategoryBloc, CategoryState>(
         builder: (context, state) {
           if (state is CategoryListLoaded) {
+            final categoryIds = state.categories.map((c) => c.id).toSet();
+            final validValue = categoryIds.contains(_selectedCategoryId)
+                ? _selectedCategoryId
+                : null;
             return DropdownButtonFormField<String>(
-              value: _selectedCategoryId,
+              value: validValue,
               decoration: const InputDecoration(
                 labelText: 'Danh mục *',
                 border: OutlineInputBorder(),
@@ -1449,8 +1453,12 @@ class _EditProductDialogState extends State<_EditProductDialog> {
       child: BlocBuilder<CategoryBloc, CategoryState>(
         builder: (context, state) {
           if (state is CategoryListLoaded) {
+            final categoryIds = state.categories.map((c) => c.id).toSet();
+            final validValue = categoryIds.contains(_selectedCategoryId)
+                ? _selectedCategoryId
+                : null;
             return DropdownButtonFormField<String>(
-              value: _selectedCategoryId,
+              value: validValue,
               decoration: const InputDecoration(
                 labelText: 'Danh mục *',
                 border: OutlineInputBorder(),
