@@ -113,9 +113,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthSuccess(user: user));
     } catch (e) {
       debugPrint('Google Sign-In Error Detail: $e');
-      String msg = e.toString();
+      String msg;
       if (e is PlatformException) {
-          msg = 'Lỗi [${e.code}]: ${e.message} - ${e.details}';
+        if (e.code == 'network_error') {
+          msg = 'Không thể kết nối Google. Vui lòng kiểm tra mạng hoặc đăng nhập bằng Email/Mật khẩu.';
+        } else if (e.code == 'sign_in_canceled') {
+          emit(const AuthInitial());
+          return;
+        } else {
+          msg = 'Lỗi đăng nhập Google: ${e.message ?? e.code}';
+        }
+      } else {
+        msg = e.toString().replaceFirst('Exception: ', '');
       }
       emit(AuthFailure(message: msg));
     }
