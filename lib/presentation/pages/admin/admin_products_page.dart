@@ -256,37 +256,15 @@ class _AdminProductsContentState extends State<_AdminProductsContent> {
                                 ),
                               ),
                               SizedBox(height: isMobile ? 12 : 16),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
+                              Row(
                                 children: [
-                                  _StatChip(
-                                    icon: Icons.inventory_2_rounded,
-                                    label: 'Tổng',
-                                    value: '${products.length}',
-                                    color: Colors.blue,
-                                  ),
-                                  _StatChip(
-                                    icon: Icons.check_circle_rounded,
-                                    label: 'Hoạt động',
-                                    value:
-                                        '${products.where((p) => p.isActive).length}',
-                                    color: Colors.green,
-                                  ),
-                                  _StatChip(
-                                    icon: Icons.cancel_rounded,
-                                    label: 'Ngừng bán',
-                                    value:
-                                        '${products.where((p) => !p.isActive).length}',
-                                    color: Colors.red,
-                                  ),
-                                  _StatChip(
-                                    icon: Icons.inventory_rounded,
-                                    label: 'Còn hàng',
-                                    value:
-                                        '${products.where((p) => p.stockQuantity > 0).length}',
-                                    color: Colors.orange,
-                                  ),
+                                  Expanded(child: _StatChip(icon: Icons.inventory_2_rounded, label: 'Tong', value: '${products.length}', color: Colors.blue)),
+                                  const SizedBox(width: 6),
+                                  Expanded(child: _StatChip(icon: Icons.check_circle_rounded, label: 'Active', value: '${products.where((p) => p.isActive).length}', color: Colors.green)),
+                                  const SizedBox(width: 6),
+                                  Expanded(child: _StatChip(icon: Icons.cancel_rounded, label: 'Off', value: '${products.where((p) => !p.isActive).length}', color: Colors.red)),
+                                  const SizedBox(width: 6),
+                                  Expanded(child: _StatChip(icon: Icons.inventory_rounded, label: 'Stock', value: '${products.where((p) => p.stockQuantity > 0).length}', color: Colors.orange)),
                                 ],
                               ),
                             ],
@@ -738,27 +716,22 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '$label: $value',
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -1187,8 +1160,8 @@ class _CreateProductDialogState extends State<_CreateProductDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Thêm sản phẩm mới'),
-      content: SizedBox(
-        width: 500,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -1367,8 +1340,8 @@ class _EditProductDialogState extends State<_EditProductDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Chỉnh sửa sản phẩm'),
-      content: SizedBox(
-        width: 500,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(

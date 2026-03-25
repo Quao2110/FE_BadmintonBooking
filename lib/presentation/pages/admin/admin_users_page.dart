@@ -172,29 +172,13 @@ class _AdminUsersContentState extends State<_AdminUsersContent> {
                           ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                        Row(
                           children: [
-                            _StatChip(
-                              icon: Icons.people_rounded,
-                              label: 'Tổng',
-                              value: '${users.length}',
-                              color: Colors.blue,
-                            ),
-                            _StatChip(
-                              icon: Icons.admin_panel_settings_rounded,
-                              label: 'Admin',
-                              value:
-                                  '${users.where((u) => u.role?.toLowerCase() == 'admin').length}',
-                              color: Colors.amber,
-                            ),
-                            _StatChip(
-                              icon: Icons.check_circle_rounded,
-                              label: 'Hoạt động',
-                              value: '${users.where((u) => u.isActive).length}',
-                              color: Colors.green,
-                            ),
+                            Expanded(child: _StatChip(icon: Icons.people_rounded, label: 'Tong', value: '${users.length}', color: Colors.blue)),
+                            const SizedBox(width: 6),
+                            Expanded(child: _StatChip(icon: Icons.admin_panel_settings_rounded, label: 'Admin', value: '${users.where((u) => u.role?.toLowerCase() == 'admin').length}', color: Colors.amber)),
+                            const SizedBox(width: 6),
+                            Expanded(child: _StatChip(icon: Icons.check_circle_rounded, label: 'Active', value: '${users.where((u) => u.isActive).length}', color: Colors.green)),
                           ],
                         ),
                       ],
@@ -591,27 +575,22 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '$label: $value',
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -986,9 +965,8 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 500,
-        constraints: const BoxConstraints(maxHeight: 700),
-        padding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+        padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,

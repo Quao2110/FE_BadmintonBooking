@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/material.dart';
 import '../constants/api_constants.dart';
 import '../errors/exceptions.dart';
 import '../storage/secure_storage.dart';
+import 'navigator_key.dart';
 
 /// Singleton Dio client với SSL bypass, timeout, base URL và JWT auto-inject
 class DioClient {

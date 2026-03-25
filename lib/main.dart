@@ -10,6 +10,7 @@ import 'presentation/bloc/auth/auth_event.dart';
 import 'presentation/bloc/court/court_bloc.dart';
 import 'presentation/bloc/shop/shop_bloc.dart';
 import 'presentation/bloc/shop/shop_event.dart';
+import 'core/network/navigator_key.dart';
 import 'routes/app_router.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'Badminton App',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,

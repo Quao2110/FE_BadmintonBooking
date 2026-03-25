@@ -147,29 +147,35 @@ class _AdminCourtsContentState extends State<_AdminCourtsContent> {
                           ),
                         ),
                         SizedBox(height: isMobile ? 12 : 16),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                        Row(
                           children: [
-                            _StatChip(
-                              icon: Icons.sports_tennis_rounded,
-                              label: 'Tổng',
-                              value: '${courts.length}',
-                              color: Colors.blue,
+                            Expanded(
+                              child: _StatChip(
+                                icon: Icons.sports_tennis_rounded,
+                                label: 'Tong',
+                                value: '${courts.length}',
+                                color: Colors.blue,
+                              ),
                             ),
-                            _StatChip(
-                              icon: Icons.check_circle_rounded,
-                              label: 'Hoạt động',
-                              value:
-                                  '${courts.where((c) => c.status.toLowerCase() == 'active' || c.status.toLowerCase() == 'available').length}',
-                              color: Colors.green,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _StatChip(
+                                icon: Icons.check_circle_rounded,
+                                label: 'Active',
+                                value:
+                                    '${courts.where((c) => c.status.toLowerCase() == 'active' || c.status.toLowerCase() == 'available').length}',
+                                color: Colors.green,
+                              ),
                             ),
-                            _StatChip(
-                              icon: Icons.cancel_rounded,
-                              label: 'Bảo trì',
-                              value:
-                                  '${courts.where((c) => c.status.toLowerCase() == 'maintenance' || c.status.toLowerCase() == 'inactive').length}',
-                              color: Colors.red,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _StatChip(
+                                icon: Icons.cancel_rounded,
+                                label: 'Off',
+                                value:
+                                    '${courts.where((c) => c.status.toLowerCase() == 'maintenance' || c.status.toLowerCase() == 'inactive').length}',
+                                color: Colors.red,
+                              ),
                             ),
                           ],
                         ),
@@ -529,27 +535,26 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '$label: $value',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
