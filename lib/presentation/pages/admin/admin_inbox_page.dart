@@ -59,20 +59,111 @@ class _InboxBodyState extends State<_InboxBody> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+
+        if (isMobile) {
+          return _buildMobileLayout();
+        }
+        return _buildDesktopLayout();
+      },
+    );
+  }
+
+  // ─── Mobile: Full-screen list, tap -> full-screen chat ─────────────────────
+
+  Widget _buildMobileLayout() {
+    // If a room is selected, show chat panel with back button
+    if (_selectedRoom != null) {
+      return Column(
+        children: [
+          // Header with back
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: AppColors.border)),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () => setState(() => _selectedRoom = null),
+                ),
+                CircleAvatar(
+                  backgroundColor: AppColors.primary,
+                  radius: 16,
+                  child: Text(
+                    (_selectedRoom!.userName?.isNotEmpty == true
+                            ? _selectedRoom!.userName![0]
+                            : '?')
+                        .toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _selectedRoom!.userName ?? 'User',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Chat area
+          Expanded(
+            child: _ChatArea(
+              room: _selectedRoom!,
+              scrollController: _scrollController,
+            ),
+          ),
+          // Reply bar
+          _ReplyBar(
+            room: _selectedRoom!,
+            controller: _replyController,
+            onSend: () => _sendReply(context),
+          ),
+        ],
+      );
+    }
+
+    // Show room list
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: const Text(
+            'Hop thu CSKH',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          ),
+        ),
+        Expanded(
+          child: _ChatRoomList(
+            selectedRoom: _selectedRoom,
+            onRoomSelected: (room) => setState(() => _selectedRoom = room),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Desktop: Side-by-side layout ──────────────────────────────────────────
+
+  Widget _buildDesktopLayout() {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Hộp thư CSKH',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+            'Hop thu CSKH',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Expanded(
             child: Card(
               elevation: 0,
@@ -80,11 +171,12 @@ class _InboxBodyState extends State<_InboxBody> {
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(color: AppColors.border),
               ),
+              clipBehavior: Clip.antiAlias,
               child: Row(
                 children: [
-                  // Sidebar – danh sách phòng chat
+                  // Room list
                   SizedBox(
-                    width: 300,
+                    width: 280,
                     child: _ChatRoomList(
                       selectedRoom: _selectedRoom,
                       onRoomSelected: (room) => setState(() => _selectedRoom = room),
@@ -98,20 +190,53 @@ class _InboxBodyState extends State<_InboxBody> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.inbox_rounded, size: 64, color: Colors.grey),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Chọn một cuộc hội thoại để xem tin nhắn',
-                                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                                ),
+                                Icon(Icons.inbox_rounded, size: 48, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Chon mot cuoc hoi thoai', style: TextStyle(color: Colors.grey)),
                               ],
                             ),
                           )
-                        : _ChatPanel(
-                            room: _selectedRoom!,
-                            replyController: _replyController,
-                            scrollController: _scrollController,
-                            onSend: () => _sendReply(context),
+                        : Column(
+                            children: [
+                              // Chat header
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: AppColors.primary,
+                                      radius: 16,
+                                      child: Text(
+                                        (_selectedRoom!.userName?.isNotEmpty == true
+                                                ? _selectedRoom!.userName![0]
+                                                : '?')
+                                            .toUpperCase(),
+                                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      _selectedRoom!.userName ?? 'User',
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: _ChatArea(
+                                  room: _selectedRoom!,
+                                  scrollController: _scrollController,
+                                ),
+                              ),
+                              _ReplyBar(
+                                room: _selectedRoom!,
+                                controller: _replyController,
+                                onSend: () => _sendReply(context),
+                              ),
+                            ],
                           ),
                   ),
                 ],
@@ -150,26 +275,30 @@ class _ChatRoomList extends StatelessWidget {
           children: [
             // Search bar
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: AppColors.border)),
-                color: Colors.grey.withValues(alpha: 0.05),
+                color: Colors.grey.withOpacity(0.05),
               ),
               child: Row(children: [
                 Expanded(
                   child: TextField(
                     decoration: const InputDecoration(
-                      hintText: 'Tìm kiếm...',
+                      hintText: 'Tim kiem...',
                       prefixIcon: Icon(Icons.search, size: 20),
                       border: InputBorder.none,
                       isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
                     ),
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
                   onPressed: () => context.read<InboxBloc>().add(LoadAdminChatRoomsEvent()),
-                  tooltip: 'Làm mới',
+                  tooltip: 'Refresh',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
               ]),
             ),
@@ -182,7 +311,7 @@ class _ChatRoomList extends StatelessWidget {
                 if (state is AdminChatRoomsLoaded) {
                   if (state.rooms.isEmpty) {
                     return const Center(
-                      child: Text('Chưa có tin nhắn nào', style: TextStyle(color: Colors.grey)),
+                      child: Text('Chua co tin nhan', style: TextStyle(color: Colors.grey)),
                     );
                   }
                   return ListView.separated(
@@ -192,24 +321,25 @@ class _ChatRoomList extends StatelessWidget {
                       final room = state.rooms[index];
                       final isSelected = selectedRoom?.chatRoomId == room.chatRoomId;
                       return ListTile(
+                        dense: true,
                         selected: isSelected,
-                        selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
+                        selectedTileColor: AppColors.primary.withOpacity(0.08),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         leading: CircleAvatar(
+                          radius: 18,
                           backgroundColor: AppColors.primary,
                           child: Text(
-                            (room.userName?.isNotEmpty == true
-                                    ? room.userName![0]
-                                    : '?')
-                                .toUpperCase(),
-                            style: const TextStyle(color: Colors.white),
+                            (room.userName?.isNotEmpty == true ? room.userName![0] : '?').toUpperCase(),
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
                           ),
                         ),
                         title: Text(
                           room.userName ?? 'User ${room.userId.substring(0, 6)}',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
-                          room.lastMessage ?? 'Chưa có tin nhắn',
+                          room.lastMessage ?? 'Chua co tin nhan',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 12),
@@ -217,7 +347,7 @@ class _ChatRoomList extends StatelessWidget {
                         trailing: room.lastMessageAt != null
                             ? Text(
                                 _formatTime(room.lastMessageAt!),
-                                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
                               )
                             : null,
                         onTap: () => onRoomSelected(room),
@@ -225,9 +355,8 @@ class _ChatRoomList extends StatelessWidget {
                     },
                   );
                 }
-                // Initial / after send
                 return const Center(
-                  child: Text('Đang tải...', style: TextStyle(color: Colors.grey)),
+                  child: Text('Dang tai...', style: TextStyle(color: Colors.grey)),
                 );
               }),
             ),
@@ -246,147 +375,125 @@ class _ChatRoomList extends StatelessWidget {
   }
 }
 
-// ─── Chat Panel ───────────────────────────────────────────────────────────────
+// ─── Chat Area ────────────────────────────────────────────────────────────────
 
-class _ChatPanel extends StatelessWidget {
+class _ChatArea extends StatelessWidget {
   final ChatRoomEntity room;
-  final TextEditingController replyController;
   final ScrollController scrollController;
+
+  const _ChatArea({required this.room, required this.scrollController});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.grey.shade50,
+      child: ListView(
+        controller: scrollController,
+        padding: const EdgeInsets.all(16),
+        children: [
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'Hoi thoai voi ${room.userName ?? 'khach hang'}',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
+          ),
+          if (room.lastMessage != null) ...[
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                ),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(room.lastMessage!, style: const TextStyle(fontSize: 14)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Reply Bar ────────────────────────────────────────────────────────────────
+
+class _ReplyBar extends StatelessWidget {
+  final ChatRoomEntity room;
+  final TextEditingController controller;
   final VoidCallback onSend;
 
-  const _ChatPanel({
+  const _ReplyBar({
     required this.room,
-    required this.replyController,
-    required this.scrollController,
+    required this.controller,
     required this.onSend,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<InboxBloc, InboxState>(
-      listener: (context, state) {
-        if (state is InboxMessageSent) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã gửi!'), backgroundColor: Colors.green, duration: Duration(seconds: 1)),
-          );
-        }
-      },
+    return BlocBuilder<InboxBloc, InboxState>(
       builder: (context, state) {
-        return Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.border)),
-                color: Colors.grey.withValues(alpha: 0.03),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppColors.primary,
-                    radius: 18,
-                    child: Text(
-                      (room.userName?.isNotEmpty == true ? room.userName![0] : '?').toUpperCase(),
-                      style: const TextStyle(color: Colors.white),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.border)),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    hintText: 'Nhan tin...',
+                    hintStyle: const TextStyle(fontSize: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    isDense: true,
                   ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        room.userName ?? 'User',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const Text('Khách hàng', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Vùng chat – hiển thị placeholder (API GET messages riêng per room chưa có endpoint)
-            Expanded(
-              child: Container(
-                color: Colors.grey.shade50,
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Cuộc hội thoại với ${room.userName ?? 'khách hàng'}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    if (room.lastMessage != null) ...[
-                      const SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Text(room.lastMessage!, style: const TextStyle(fontSize: 14)),
-                        ),
-                      ),
-                    ],
-                  ],
+                  style: const TextStyle(fontSize: 14),
+                  onSubmitted: (_) => onSend(),
                 ),
               ),
-            ),
-
-            // Thanh reply
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.border)),
-                color: Colors.white,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: replyController,
-                      decoration: InputDecoration(
-                        hintText: 'Nhập câu trả lời cho ${room.userName ?? 'khách'}...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade100,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      onSubmitted: (_) => onSend(),
-                    ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 36,
+                height: 36,
+                child: CircleAvatar(
+                  backgroundColor: AppColors.primary,
+                  child: IconButton(
+                    icon: state is InboxLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send, color: Colors.white, size: 16),
+                    onPressed: state is InboxLoading ? null : onSend,
+                    padding: EdgeInsets.zero,
                   ),
-                  const SizedBox(width: 8),
-                  CircleAvatar(
-                    backgroundColor: AppColors.primary,
-                    child: IconButton(
-                      icon: state is InboxLoading
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.send, color: Colors.white, size: 20),
-                      onPressed: state is InboxLoading ? null : onSend,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

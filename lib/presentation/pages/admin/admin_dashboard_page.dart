@@ -11,7 +11,7 @@ import '../../../presentation/bloc/dashboard/dashboard_state.dart';
 import 'admin_layout.dart';
 import '../../../routes/app_router.dart';
 
-/// Admin Dashboard - Trang tổng quan với biểu đồ thống kê thật
+/// Admin Dashboard
 class AdminDashboardPage extends StatelessWidget {
   final User user;
 
@@ -53,62 +53,60 @@ class _DashboardBodyState extends State<_DashboardBody> {
               // Welcome Banner
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppColors.primary, AppColors.secondary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Chào mừng trở lại, ${widget.user.fullName?.split(' ').last ?? 'Admin'}! 👋',
+                      'Xin chao, ${widget.user.fullName?.split(' ').last ?? 'Admin'}!',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
-                      'Quản lý hệ thống đặt sân cầu lông',
+                      'Quan ly he thong dat san cau long',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: 13,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Error state
+              // Error
               if (state is DashboardError)
-                _ErrorBanner(message: state.message, onRetry: () {
-                  context.read<DashboardBloc>().add(LoadDashboardEvent(period: _selectedPeriod));
-                }),
-
-              // Stats Cards
-              const Text(
-                'Tổng quan',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                _ErrorBanner(
+                  message: state.message,
+                  onRetry: () {
+                    context.read<DashboardBloc>().add(LoadDashboardEvent(period: _selectedPeriod));
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
 
+              // Stats
               if (state is DashboardLoading)
-                const Center(child: CircularProgressIndicator())
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
               else if (state is DashboardLoaded) ...[
-                _StatsCards(state: state, user: widget.user),
-                const SizedBox(height: 24),
+                _StatsGrid(state: state, user: widget.user),
+                const SizedBox(height: 20),
                 _BookingRevenueChart(
                   entity: state.bookingRevenue,
                   selectedPeriod: _selectedPeriod,
@@ -117,35 +115,11 @@ class _DashboardBodyState extends State<_DashboardBody> {
                     context.read<DashboardBloc>().add(ChangeDashboardPeriodEvent(p));
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 _TopProductsChart(orderRevenue: state.orderRevenue),
-              ] else ...[
-                // Fallback stat cards (placeholder khi chưa load)
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isMobile = constraints.maxWidth < 600;
-                    final isLandscape =
-                        MediaQuery.of(context).orientation ==
-                        Orientation.landscape;
-                    return GridView.count(
-                      crossAxisCount: isMobile ? 2 : 4,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: isMobile
-                          ? (isLandscape ? 2.2 : 1.4)
-                          : 1.5,
-                      children: [
-                        _StatCard(icon: Icons.people_rounded, title: 'Users', value: '--', color: Colors.blue, onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.admin, arguments: widget.user)),
-                        _StatCard(icon: Icons.sports_tennis_rounded, title: 'Sân', value: '--', color: Colors.green, onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.adminCourts, arguments: widget.user)),
-                        _StatCard(icon: Icons.shopping_bag_rounded, title: 'Sản phẩm', value: '--', color: Colors.orange, onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.adminProducts, arguments: widget.user)),
-                        _StatCard(icon: Icons.calendar_today_rounded, title: 'Bookings', value: '--', color: Colors.purple, onTap: () {}),
-                      ],
-                    );
-                  },
-                ),
-              ],
+              ] else
+                // Placeholder
+                _PlaceholderStats(user: widget.user),
             ],
           ),
         );
@@ -154,70 +128,132 @@ class _DashboardBodyState extends State<_DashboardBody> {
   }
 }
 
-// ─── Stats Cards (khi đã load) ────────────────────────────────────────────────
+// ─── Stats Grid ───────────────────────────────────────────────────────────────
 
-class _StatsCards extends StatelessWidget {
+class _StatsGrid extends StatelessWidget {
   final DashboardLoaded state;
   final User user;
-  const _StatsCards({required this.state, required this.user});
+  const _StatsGrid({required this.state, required this.user});
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##0', 'vi_VN');
-    final bookingRevenue = state.bookingRevenue;
-    final orderRevenue = state.orderRevenue;
+    final br = state.bookingRevenue;
+    final or = state.orderRevenue;
 
-    // Top sản phẩm bán chạy nhất
-    final topProduct = orderRevenue.topProducts.isNotEmpty
-        ? orderRevenue.topProducts.first.productName
-        : '--';
+    final topProduct = or.topProducts.isNotEmpty ? or.topProducts.first.productName : '--';
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 600;
-      final isLandscape =
-          MediaQuery.of(context).orientation == Orientation.landscape;
-      return GridView.count(
-        crossAxisCount: isMobile ? 2 : 4,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: isMobile ? (isLandscape ? 2.2 : 1.2) : 1.4,
+    final items = <_StatData>[
+      _StatData(Icons.attach_money_rounded, 'DT San', '${fmt.format(br.totalRevenue.toInt())}d', Colors.teal),
+      _StatData(Icons.calendar_today_rounded, 'Dat san', '${br.totalBookings}', Colors.purple),
+      _StatData(Icons.store_rounded, 'DT Hang', '${fmt.format(or.totalRevenue.toInt())}d', Colors.orange),
+      _StatData(Icons.emoji_events_rounded, 'Top SP', topProduct, Colors.amber),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 2.0,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, i) => _StatCard(data: items[i]),
+    );
+  }
+}
+
+class _StatData {
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+  const _StatData(this.icon, this.title, this.value, this.color);
+}
+
+class _StatCard extends StatelessWidget {
+  final _StatData data;
+  const _StatCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: Row(
         children: [
-          _StatCard(
-            icon: Icons.attach_money_rounded,
-            title: 'Doanh thu Sân',
-            value: '${fmt.format(bookingRevenue.totalRevenue.toInt())}₫',
-            color: Colors.teal,
-            onTap: () {},
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: data.color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(data.icon, color: data.color, size: 20),
           ),
-          _StatCard(
-            icon: Icons.calendar_today_rounded,
-            title: 'Lượt đặt sân',
-            value: '${bookingRevenue.totalBookings}',
-            color: Colors.purple,
-            onTap: () => Navigator.pushReplacementNamed(
-                context, AppRoutes.adminBookings,
-                arguments: user),
-          ),
-          _StatCard(
-            icon: Icons.store_rounded,
-            title: 'Doanh thu Hàng',
-            value: '${fmt.format(orderRevenue.totalRevenue.toInt())}₫',
-            color: Colors.orange,
-            onTap: () {},
-          ),
-          _StatCard(
-            icon: Icons.emoji_events_rounded,
-            title: 'Top Sản phẩm',
-            value: topProduct,
-            color: Colors.amber,
-            onTap: () {},
-            smallText: true,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  data.title,
+                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
-      );
-    });
+      ),
+    );
+  }
+}
+
+// ─── Placeholder Stats ────────────────────────────────────────────────────────
+
+class _PlaceholderStats extends StatelessWidget {
+  final User user;
+  const _PlaceholderStats({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_StatData>[
+      const _StatData(Icons.people_rounded, 'Users', '--', Colors.blue),
+      const _StatData(Icons.sports_tennis_rounded, 'San', '--', Colors.green),
+      const _StatData(Icons.shopping_bag_rounded, 'San pham', '--', Colors.orange),
+      const _StatData(Icons.calendar_today_rounded, 'Bookings', '--', Colors.purple),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 2.0,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, i) => _StatCard(data: items[i]),
+    );
   }
 }
 
@@ -241,87 +277,71 @@ class _BookingRevenueChart extends StatelessWidget {
     }).toList();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          // Title + period selector
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
-                child: Text(
-                  'Doanh thu Đặt sân',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+              const Text(
+                'Doanh thu Dat san',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
-              // Period selector
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'day', label: Text('Ngày')),
-                  ButtonSegment(value: 'month', label: Text('Tháng')),
-                  ButtonSegment(value: 'year', label: Text('Năm')),
-                ],
-                selected: {selectedPeriod},
-                onSelectionChanged: (s) => onPeriodChanged(s.first),
-                style: ButtonStyle(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'day', label: Text('Ngay', style: TextStyle(fontSize: 12))),
+                    ButtonSegment(value: 'month', label: Text('Thang', style: TextStyle(fontSize: 12))),
+                    ButtonSegment(value: 'year', label: Text('Nam', style: TextStyle(fontSize: 12))),
+                  ],
+                  selected: {selectedPeriod},
+                  onSelectionChanged: (s) => onPeriodChanged(s.first),
+                  style: const ButtonStyle(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           if (spots.isEmpty)
             const Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text('Không có dữ liệu', style: TextStyle(color: Colors.grey)),
+                padding: EdgeInsets.all(24),
+                child: Text('Khong co du lieu', style: TextStyle(color: Colors.grey)),
               ),
             )
           else
             SizedBox(
-              height: 220,
+              height: 200,
               child: LineChart(
                 LineChartData(
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: null,
-                    getDrawingHorizontalLine: (v) => FlLine(
-                      color: Colors.grey.shade100,
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.shade100, strokeWidth: 1),
                   ),
                   titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 30,
+                        reservedSize: 28,
                         interval: 1,
                         getTitlesWidget: (value, meta) {
                           final idx = value.toInt();
-                          if (idx < 0 || idx >= entity.revenuePoints.length) {
-                            return const SizedBox();
-                          }
+                          if (idx < 0 || idx >= entity.revenuePoints.length) return const SizedBox();
                           return Padding(
-                            padding: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               entity.revenuePoints[idx].label,
-                              style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              style: const TextStyle(fontSize: 9, color: Colors.grey),
                             ),
                           );
                         },
@@ -330,13 +350,10 @@ class _BookingRevenueChart extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 55,
+                        reservedSize: 50,
                         getTitlesWidget: (value, meta) {
                           final fmt = NumberFormat.compact(locale: 'vi_VN');
-                          return Text(
-                            fmt.format(value),
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
-                          );
+                          return Text(fmt.format(value), style: const TextStyle(fontSize: 9, color: Colors.grey));
                         },
                       ),
                     ),
@@ -349,14 +366,14 @@ class _BookingRevenueChart extends StatelessWidget {
                       spots: spots,
                       isCurved: true,
                       color: AppColors.primary,
-                      barWidth: 3,
+                      barWidth: 2.5,
                       isStrokeCapRound: true,
                       belowBarData: BarAreaData(
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primary.withValues(alpha: 0.3),
-                            AppColors.primary.withValues(alpha: 0.0),
+                            AppColors.primary.withOpacity(0.25),
+                            AppColors.primary.withOpacity(0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -364,9 +381,8 @@ class _BookingRevenueChart extends StatelessWidget {
                       ),
                       dotData: FlDotData(
                         show: true,
-                        getDotPainter: (spot, percent, barData, index) =>
-                            FlDotCirclePainter(
-                          radius: 4,
+                        getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                          radius: 3,
                           color: Colors.white,
                           strokeWidth: 2,
                           strokeColor: AppColors.primary,
@@ -383,7 +399,7 @@ class _BookingRevenueChart extends StatelessWidget {
   }
 }
 
-// ─── Top Products Bar Chart ───────────────────────────────────────────────────
+// ─── Top Products Chart ───────────────────────────────────────────────────────
 
 class _TopProductsChart extends StatelessWidget {
   final OrderRevenueEntity orderRevenue;
@@ -395,37 +411,33 @@ class _TopProductsChart extends StatelessWidget {
     final maxSold = top5.isEmpty ? 1 : top5.map((p) => p.totalSold).reduce((a, b) => a > b ? a : b);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 22),
-            const SizedBox(width: 8),
-            const Text(
-              'Top 5 Sản phẩm bán chạy',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+          const Row(children: [
+            Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 20),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Top 5 San pham ban chay',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
             ),
           ]),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (top5.isEmpty)
-            const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('Không có dữ liệu', style: TextStyle(color: Colors.grey))))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('Khong co du lieu', style: TextStyle(color: Colors.grey)),
+              ),
+            )
           else
             ...top5.asMap().entries.map((entry) {
               final i = entry.key;
@@ -433,44 +445,47 @@ class _TopProductsChart extends StatelessWidget {
               final ratio = maxSold > 0 ? product.totalSold / maxSold : 0.0;
               final colors = [Colors.amber, Colors.blue, Colors.green, Colors.orange, Colors.purple];
               return Padding(
-                padding: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
                     SizedBox(
-                      width: 24,
-                      child: Text('${i + 1}',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: i == 0 ? Colors.amber.shade700 : Colors.grey)),
+                      width: 20,
+                      child: Text(
+                        '${i + 1}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: i == 0 ? Colors.amber.shade700 : Colors.grey,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Expanded(
                       flex: 3,
                       child: Text(
                         product.productName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Expanded(
                       flex: 4,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(3),
                             child: LinearProgressIndicator(
                               value: ratio,
-                              minHeight: 10,
+                              minHeight: 8,
                               backgroundColor: Colors.grey.shade100,
                               color: colors[i % colors.length],
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text('${product.totalSold} sold',
-                              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text('${product.totalSold} sold', style: const TextStyle(fontSize: 10, color: Colors.grey)),
                         ],
                       ),
                     ),
@@ -484,7 +499,7 @@ class _TopProductsChart extends StatelessWidget {
   }
 }
 
-// ─── Reusable Widgets ─────────────────────────────────────────────────────────
+// ─── Error Banner ─────────────────────────────────────────────────────────────
 
 class _ErrorBanner extends StatelessWidget {
   final String message;
@@ -494,103 +509,20 @@ class _ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.red.shade200),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red),
-          const SizedBox(width: 12),
-          Expanded(child: Text(message, style: const TextStyle(color: Colors.red))),
-          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message, style: const TextStyle(color: Colors.red, fontSize: 13))),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
-      ),
-    );
-  }
-}
-
-/// Stat Card Widget
- class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final Color color;
-  final VoidCallback onTap;
-  final bool smallText;
-
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.color,
-    required this.onTap,
-    this.smallText = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 26),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: smallText ? 13 : 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
