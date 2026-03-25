@@ -12,7 +12,7 @@ class ApiConstants {
     const env = String.fromEnvironment('API_BASE_URL');
     if (env.isNotEmpty) return env;
     const envScheme = String.fromEnvironment('API_SCHEME');
-    final scheme = envScheme.isNotEmpty ? envScheme : 'http';
+    final scheme = envScheme.isNotEmpty ? envScheme : 'https';
     final port = scheme == 'https' ? 7133 : 5000;
     if (!kIsWeb && Platform.isAndroid) {
       return '$scheme://10.0.2.2:$port';

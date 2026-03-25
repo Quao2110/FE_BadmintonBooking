@@ -26,6 +26,7 @@ class _CourtDetailPageState extends State<CourtDetailPage> {
   void initState() {
     super.initState();
     context.read<CourtBloc>().add(LoadCourtById(widget.courtId));
+    context.read<ShopBloc>().add(const LoadShopInfo());
     _calculateDistance();
   }
 

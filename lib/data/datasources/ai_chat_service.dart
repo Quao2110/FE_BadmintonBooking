@@ -22,6 +22,9 @@ class AiChatService {
 
   /// Tự động tìm model generateContent khả dụng
   Future<void> _findModel() async {
+    // Use a reliable default immediately so chat works even if discovery fails
+    _modelName = 'gemini-2.0-flash';
+
     try {
       final resp = await _dio.get(
         'https://generativelanguage.googleapis.com/v1beta/models?key=$_apiKey',
@@ -36,6 +39,7 @@ class AiChatService {
         'gemini-2.5-pro',
         'gemini-2.0-flash-001',
         'gemini-2.0-flash-lite',
+        'gemini-2.0-flash',
         'gemini-flash-latest',
         'gemini-pro-latest',
       ];
@@ -73,11 +77,13 @@ class AiChatService {
         }
       }
 
-      debugPrint('[AI Chat] No suitable model found, disabling Gemini');
-      _useGemini = false;
+      debugPrint('[AI Chat] No model found via discovery, using default: $_modelName');
+    } on DioException catch (e) {
+      debugPrint('[AI Chat] List models error (${e.response?.statusCode}): ${e.response?.data}');
+      debugPrint('[AI Chat] Using default model: $_modelName');
     } catch (e) {
       debugPrint('[AI Chat] List models error: $e');
-      _useGemini = false;
+      debugPrint('[AI Chat] Using default model: $_modelName');
     }
   }
 
